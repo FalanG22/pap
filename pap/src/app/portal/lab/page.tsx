@@ -14,7 +14,6 @@ type OrderWithDiagnosis = {
   patient: { full_name: string; dni: string };
   status: string;
   created_at: string;
-  pdf_url: string | null;
   diagnosis?: {
     general_category: string;
     descriptive_dx: string;

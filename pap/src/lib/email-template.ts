@@ -6,6 +6,7 @@ export type EmailData = {
   generalCategory: string;
   portalUrl: string;
   accessToken: string;
+  labPortalUrl?: string;
 };
 
 export function renderResultEmail(data: EmailData): string {
@@ -17,6 +18,7 @@ export function renderResultEmail(data: EmailData): string {
     generalCategory,
     portalUrl,
     accessToken,
+    labPortalUrl,
   } = data;
 
   return `<!DOCTYPE html>
@@ -69,14 +71,30 @@ export function renderResultEmail(data: EmailData): string {
         </tr>
       </table>
     </td></tr>
-    <tr><td style="padding:24px 32px 0;text-align:center">
-      <a href="${portalUrl}?token=${accessToken}&dni=${encodeURIComponent(patientDni)}"
-         style="display:inline-block;padding:14px 32px;background:#4f46e5;color:#ffffff;font-size:15px;font-weight:600;text-decoration:none;border-radius:12px">
-        Ver resultado completo
-      </a>
-      <p style="margin:12px 0 0;font-size:13px;color:#6b7280;line-height:1.5">
-        Hacé clic en el botón para acceder al portal seguro y visualizar el informe completo de PAP.
-      </p>
+    <tr><td style="padding:20px 32px 0">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+          <td style="text-align:center;padding:0 0 12px">
+            <a href="${portalUrl}?token=${accessToken}&dni=${encodeURIComponent(patientDni)}"
+               style="display:inline-block;padding:14px 32px;background:#4f46e5;color:#ffffff;font-size:15px;font-weight:600;text-decoration:none;border-radius:12px">
+              Ver resultado completo
+            </a>
+            <p style="margin:10px 0 0;font-size:13px;color:#6b7280;line-height:1.5">
+              Accedé al portal seguro para visualizar el informe completo.
+            </p>
+          </td>
+        </tr>
+        ${labPortalUrl ? `
+        <tr><td style="border-top:1px solid #e5e7eb;padding:16px 0 0;text-align:center">
+          <p style="margin:0 0 10px;font-size:13px;color:#6b7280;line-height:1.5">
+            Ingresá al portal del laboratorio para gestionar todas las órdenes y diagnósticos.
+          </p>
+          <a href="${labPortalUrl}"
+             style="display:inline-block;padding:14px 32px;background:#ffffff;color:#4f46e5;font-size:15px;font-weight:600;text-decoration:none;border-radius:12px;border:1.5px solid #4f46e5">
+            Ir al portal del laboratorio
+          </a>
+        </td></tr>` : ''}
+      </table>
     </td></tr>
     <tr><td style="padding:24px 32px 32px;text-align:center">
       <p style="margin:0;font-size:12px;color:#9ca3af">

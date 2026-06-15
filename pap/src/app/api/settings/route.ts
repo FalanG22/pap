@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
 
-const ADMIN_KEYS = ['app_domain', 'from_email', 'from_name', 'smtp_host', 'smtp_port', 'smtp_user', 'smtp_pass', 'smtp_secure', 'cloudflare_worker_url']
+const ADMIN_KEYS = ['app_domain', 'from_email', 'from_name', 'smtp_host', 'smtp_port', 'smtp_user', 'smtp_pass', 'smtp_secure']
 
 export async function GET() {
   const supabase = await createClient()

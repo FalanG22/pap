@@ -23,13 +23,10 @@ async function getAdminEmail(supabase: Awaited<ReturnType<typeof createClient>>)
   return roles?.some(r => r.role === 'super_admin') ? user.email : null
 }
 
-export async function POST(request: Request) {
+export async function POST() {
   const supabase = await createClient()
   const adminEmail = await getAdminEmail(supabase)
   if (!adminEmail) return NextResponse.json({ error: 'Solo super_admin' }, { status: 403 })
-
-  const body = await request.json()
-  const { method } = body
 
   const { data: settings } = await supabase
     .schema('_public')
@@ -51,33 +48,6 @@ export async function POST(request: Request) {
       <p style="font-size:12px;color:#9ca3af">PAP Diagnóstico — Envío de credenciales</p>
     </body></html>
   `
-
-  if (method === 'cloudflare' || (!method && s.cloudflare_worker_url)) {
-    if (!s.cloudflare_worker_url) {
-      return NextResponse.json({ error: 'Cloudflare Worker no configurado' }, { status: 400 })
-    }
-    try {
-      const cfRes = await fetch(s.cloudflare_worker_url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          to: adminEmail,
-          from: fromEmail,
-          from_name: fromName,
-          subject,
-          html,
-        }),
-      })
-      if (!cfRes.ok) {
-        const err = await cfRes.text()
-        return NextResponse.json({ error: `Cloudflare Worker: ${err}` }, { status: 500 })
-      }
-      return NextResponse.json({ success: true, method: 'cloudflare', to: adminEmail })
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Error desconocido'
-      return NextResponse.json({ error: `Cloudflare Worker: ${msg}` }, { status: 500 })
-    }
-  }
 
   if (!s.smtp_host || !s.smtp_port || !s.smtp_user || !s.smtp_pass) {
     return NextResponse.json({ error: 'SMTP no configurado' }, { status: 400 })

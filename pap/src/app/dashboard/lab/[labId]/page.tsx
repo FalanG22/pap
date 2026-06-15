@@ -12,15 +12,16 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus, Search, Building2, Clock, Archive, FileText, ArrowLeft, Mail } from "lucide-react";
+import { Plus, Search, Building2, Clock, Archive, FileText, ArrowLeft, Mail, Trash2, Send } from "lucide-react";
 import { toast } from "sonner";
 
 type OrderRow = {
   id: string;
-  patient: { full_name: string; dni: string };
+  patient: { full_name: string; dni: string } | null;
   status: string;
   created_at: string;
   archived_at: string | null;
+  downloaded_at: string | null;
   diagnosis?: { is_signed: boolean; signed_at: string | null } | null;
 };
 
@@ -56,6 +57,21 @@ export default function LabDetailPage() {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [sendingBatch, setSendingBatch] = useState(false);
+
+  const handleDelete = async (orderId: string) => {
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/orders/${orderId}`, { method: "DELETE" });
+      if (!res.ok) { const err = await res.json(); toast.error(err.error || "Error al eliminar"); setDeleting(false); return; }
+      toast.success("Orden eliminada");
+      setDeleteTarget(null);
+      load();
+    } catch { toast.error("Error de conexión"); }
+    finally { setDeleting(false); }
+  };
 
   const load = useCallback(async () => {
     try {
@@ -115,6 +131,24 @@ export default function LabDetailPage() {
       router.push(`/dashboard/dx/${order.id}`);
     } catch { toast.error("Error de conexión"); }
     finally { setSubmitting(false); }
+  };
+
+  const pendingSendCount = orders.filter(o => o.status === 'completed' && o.diagnosis?.is_signed).length;
+
+  const handleBatchSend = async () => {
+    setSendingBatch(true);
+    try {
+      const res = await fetch("/api/send-batch", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tenant_id: labId }),
+      });
+      const data = await res.json();
+      if (!res.ok) { toast.error(data.error || "Error al enviar"); return; }
+      toast.success(`${data.count} diagnóstico${data.count !== 1 ? 's' : ''} enviado${data.count !== 1 ? 's' : ''} al laboratorio`);
+      load();
+    } catch { toast.error("Error de conexión"); }
+    finally { setSendingBatch(false); }
   };
 
   const countActive = (year: number) => orders.filter(o => new Date(o.created_at).getFullYear() === year && !o.archived_at).length;
@@ -221,6 +255,13 @@ export default function LabDetailPage() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input placeholder="Buscar paciente o DNI..." className="pl-9 h-10 rounded-xl bg-card border-border/50" value={search} onChange={e => setSearch(e.target.value)} />
           </div>
+          {pendingSendCount > 0 && (
+            <Button onClick={handleBatchSend} disabled={sendingBatch}
+              className="rounded-xl gap-1.5 bg-rose-600 hover:bg-rose-700 h-10 shrink-0">
+              <Send className="w-4 h-4" />
+              {sendingBatch ? "Enviando..." : `Enviar (${pendingSendCount})`}
+            </Button>
+          )}
         </div>
 
         {loading ? (
@@ -265,6 +306,26 @@ export default function LabDetailPage() {
                     </div>
                   </div>
                   <Badge variant={badge.variant} className="text-xs">{badge.label}</Badge>
+                  {!o.downloaded_at && (
+                    <>
+                      {deleteTarget === o.id ? (
+                        <div className="flex items-center gap-1 ml-2" onClick={e => e.stopPropagation()}>
+                          <Button variant="destructive" size="sm" className="h-7 rounded-lg text-[10px] px-2" disabled={deleting}
+                            onClick={() => handleDelete(o.id)}>
+                            {deleting ? "..." : "Confirmar"}
+                          </Button>
+                          <Button variant="outline" size="sm" className="h-7 rounded-lg text-[10px] px-2" onClick={() => setDeleteTarget(null)}>
+                            Cancelar
+                          </Button>
+                        </div>
+                      ) : (
+                        <Button variant="ghost" size="icon" className="w-7 h-7 ml-1 text-muted-foreground hover:text-destructive"
+                          onClick={e => { e.stopPropagation(); setDeleteTarget(o.id); }}>
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                      )}
+                    </>
+                  )}
                 </div>
               );
             })}

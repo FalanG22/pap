@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -33,9 +34,21 @@ const CATEGORY_OPTIONS = [
 ];
 
 export default function MacrosPage() {
+  const router = useRouter();
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [macros, setMacros] = useState<Macro[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/me").then(r => r.json()).then(data => {
+      if (data.isSuperAdmin) {
+        setIsAdmin(true);
+      } else {
+        router.replace("/dashboard");
+      }
+    }).catch(() => router.replace("/dashboard"));
+  }, [router]);
 
   const [createOpen, setCreateOpen] = useState(false);
   const [shortcode, setShortcode] = useState("");
@@ -123,6 +136,8 @@ export default function MacrosPage() {
     acc[cat].push(m);
     return acc;
   }, {});
+
+  if (isAdmin === false) return null;
 
   return (
     <div className="px-6 py-6 max-w-4xl mx-auto space-y-6">

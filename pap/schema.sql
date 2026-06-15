@@ -91,6 +91,8 @@ CREATE TABLE "order" (
     pdf_token       UUID DEFAULT gen_random_uuid() UNIQUE,
     pdf_url         TEXT,
     notes           TEXT,
+    downloaded_at   TIMESTAMPTZ,
+    downloaded_by   UUID REFERENCES _public.users(id),
     created_at      TIMESTAMPTZ DEFAULT NOW(),
     updated_at      TIMESTAMPTZ DEFAULT NOW()
 );

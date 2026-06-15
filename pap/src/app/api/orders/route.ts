@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
+import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { getUserTenant } from '@/lib/get-tenant'
 
 export async function GET(request: Request) {
@@ -12,22 +13,49 @@ export async function GET(request: Request) {
 
   let query = supabase
     .from('order')
-    .select('*, patient:patient_id(*), diagnosis(*)')
+    .select('*, diagnosis(*), downloaded_at, downloaded_by')
     .order('created_at', { ascending: false })
     .limit(50)
 
   if (tenantIdParam) {
-    // Si se pasa tenant_id específico, filtrar por ese
     query = query.eq('tenant_id', tenantIdParam)
   } else {
-    // Sino, usar el tenant por defecto del usuario
     query = query.eq('tenant_id', tenant.tenant_id)
   }
 
   const { data: orders, error } = await query
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json(orders)
+
+  if (!orders || orders.length === 0) return NextResponse.json([])
+
+  const patientIds = orders.map(o => o.patient_id).filter(Boolean)
+  let patientMap: Record<string, unknown> = {}
+
+  if (patientIds.length > 0) {
+    const serviceSupabase = createServiceClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
+
+    const { data: patients } = await serviceSupabase
+      .from('patient')
+      .select('*')
+      .in('id', patientIds)
+
+    if (patients) {
+      for (const p of patients) {
+        patientMap[p.id] = p
+      }
+    }
+  }
+
+  const result = orders.map(o => ({
+    ...o,
+    patient: patientMap[o.patient_id] || null,
+  }))
+
+  return NextResponse.json(result)
 }
 
 export async function POST(request: Request) {

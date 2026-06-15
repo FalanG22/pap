@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { getSupabase } from "@/lib/supabase";
@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const navItems = [
+const superAdminNav = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/dashboard/labs", label: "Laboratorios", icon: Building2 },
   { href: "/dashboard/users", label: "Usuarios", icon: Users },
@@ -25,12 +25,24 @@ const navItems = [
   { href: "/dashboard/settings", label: "Configuración", icon: Settings },
 ];
 
+const labNav = [
+  { href: "/dashboard", label: "Panel", icon: LayoutDashboard },
+];
+
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [mounted] = useState(true);
+  const [isSuperAdmin, setIsSuperAdmin] = useState<boolean | null>(null);
+  const [labName, setLabName] = useState("");
+
+  useEffect(() => {
+    fetch("/api/me").then(r => r.json()).then(data => {
+      setIsSuperAdmin(data.isSuperAdmin === true);
+      if (data.currentTenant) setLabName(data.currentTenant.name);
+    }).catch(() => setIsSuperAdmin(false));
+  }, []);
 
   const handleLogout = async () => {
     const sb = getSupabase();
@@ -38,14 +50,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     router.push("/login");
   };
 
+  const navItems = isSuperAdmin ? superAdminNav : labNav;
+
   const isActive = (href: string) => {
     if (href === "/dashboard") return pathname === "/dashboard";
     return pathname.startsWith(href);
   };
-
-  if (!mounted) {
-    return <div className="min-h-screen bg-background">{children}</div>;
-  }
 
   return (
     <div className="min-h-screen bg-background flex">
@@ -76,7 +86,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           {!collapsed && (
             <div className="min-w-0">
               <p className="text-sm font-heading font-bold leading-tight">PAP</p>
-              <p className="text-[10px] text-muted-foreground leading-tight">Diagnóstico</p>
+              <p className="text-[10px] text-muted-foreground leading-tight truncate">
+                {isSuperAdmin ? "Diagnóstico" : labName || "Laboratorio"}
+              </p>
             </div>
           )}
         </div>

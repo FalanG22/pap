@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Save, Globe, Mail, Server, PenLine, Stamp, WandSparkles, Cloud, Send } from "lucide-react";
+import { Save, Globe, Mail, Server, PenLine, Stamp, WandSparkles, Send } from "lucide-react";
 import { StampDesigner } from "@/components/settings/StampDesigner";
 import { toast } from "sonner";
 
@@ -14,14 +14,13 @@ type Tab = { id: string; label: string };
 const TABS: Tab[] = [
   { id: 'general', label: 'General' },
   { id: 'smtp', label: 'SMTP' },
-  { id: 'cloudflare', label: 'Cloudflare' },
   { id: 'firma', label: 'Firma y Sello' },
   { id: 'pdf', label: 'Visualización PDF' },
 ];
 
 const GENERAL_KEYS = ['app_domain', 'from_email', 'from_name'];
 const SMTP_KEYS = ['smtp_host', 'smtp_port', 'smtp_user', 'smtp_pass', 'smtp_secure'];
-const CF_KEY = 'cloudflare_worker_url';
+
 
 const SETTINGS_META: Record<string, { label: string; description: string; icon: typeof Globe }> = {
   app_domain: { label: "Dominio de la app", description: "URL pública del sitio (ej: https://papdiagnostico.com)", icon: Globe },
@@ -44,7 +43,6 @@ export default function SettingsPage() {
   const [showStampDesigner, setShowStampDesigner] = useState(false);
   const [tab, setTab] = useState('general');
   const [testingSmtp, setTestingSmtp] = useState(false);
-  const [testingCf, setTestingCf] = useState(false);
 
   const load = async () => {
     try {
@@ -68,7 +66,7 @@ export default function SettingsPage() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const allKeys = [...GENERAL_KEYS, ...SMTP_KEYS, CF_KEY];
+      const allKeys = [...GENERAL_KEYS, ...SMTP_KEYS];
       const updates = allKeys.map((key) => ({
         key,
         value: settings[key] || "",
@@ -111,20 +109,19 @@ export default function SettingsPage() {
     finally { setUploading(false) }
   };
 
-  const handleTest = async (method: 'smtp' | 'cloudflare') => {
-    const setTesting = method === 'smtp' ? setTestingSmtp : setTestingCf;
-    setTesting(true);
+  const handleTest = async () => {
+    setTestingSmtp(true);
     try {
       const res = await fetch("/api/users/test-email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ method }),
+        body: JSON.stringify({ method: 'smtp' }),
       })
       const data = await res.json();
       if (!res.ok) { toast.error(data.error || "Error"); return; }
       toast.success(`Email de prueba enviado a ${data.to}`);
     } catch { toast.error("Error de conexión") }
-    finally { setTesting(false) }
+    finally { setTestingSmtp(false) }
   };
 
   const renderField = (key: string, meta: { label: string; description: string; icon: typeof Globe }) => {
@@ -213,46 +210,11 @@ export default function SettingsPage() {
                 <Button
                   variant="outline"
                   className="gap-1.5"
-                  onClick={() => handleTest('smtp')}
+                  onClick={handleTest}
                   disabled={testingSmtp}
                 >
                   <Send className="w-4 h-4" />
                   {testingSmtp ? "Enviando..." : "Enviar email de prueba"}
-                </Button>
-                <p className="text-xs text-muted-foreground">Se enviará un email de prueba al usuario administrador</p>
-              </div>
-            </>
-          )}
-
-          {/* Tab: Cloudflare */}
-          {tab === 'cloudflare' && (
-            <>
-              <div className="rounded-xl border border-dashed border-border/50 bg-card p-5 space-y-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-lg bg-sky-100 flex items-center justify-center">
-                    <Cloud className="w-4 h-4 text-sky-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-medium text-sm">URL del Worker</h3>
-                    <p className="text-xs text-muted-foreground">Si configurás una URL, se usará en lugar de SMTP</p>
-                  </div>
-                </div>
-                <Input
-                  value={settings.cloudflare_worker_url || ""}
-                  onChange={(e) => setSettings(prev => ({ ...prev, cloudflare_worker_url: e.target.value }))}
-                  placeholder="https://enviar-email.tu-worker.workers.dev"
-                  className="h-10"
-                />
-              </div>
-              <div className="flex items-center gap-3 pt-2">
-                <Button
-                  variant="outline"
-                  className="gap-1.5"
-                  onClick={() => handleTest('cloudflare')}
-                  disabled={testingCf || !settings.cloudflare_worker_url}
-                >
-                  <Send className="w-4 h-4" />
-                  {testingCf ? "Enviando..." : "Enviar email de prueba"}
                 </Button>
                 <p className="text-xs text-muted-foreground">Se enviará un email de prueba al usuario administrador</p>
               </div>

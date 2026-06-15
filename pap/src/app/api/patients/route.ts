@@ -24,10 +24,31 @@ export async function POST(request: Request) {
   if (!tenant) return NextResponse.json({ error: 'No auth' }, { status: 401 })
 
   const body = await request.json()
+  const dni = body.dni?.replace(/\./g, '') || body.dni
+
+  // Si el paciente ya existe para este tenant, devolverlo (y actualizar datos si cambiaron)
+  const { data: existing } = await supabase
+    .from('patient')
+    .select('*')
+    .eq('tenant_id', tenant.tenant_id)
+    .eq('dni', dni)
+    .maybeSingle()
+
+  if (existing) {
+    const { data: updated, error: updErr } = await supabase
+      .from('patient')
+      .update({ ...body, dni, updated_at: new Date().toISOString() })
+      .eq('id', existing.id)
+      .select()
+      .single()
+
+    if (updErr) return NextResponse.json({ error: updErr.message }, { status: 500 })
+    return NextResponse.json(updated)
+  }
 
   const { data, error } = await supabase
     .from('patient')
-    .insert({ ...body, tenant_id: tenant.tenant_id })
+    .insert({ ...body, dni, tenant_id: tenant.tenant_id })
     .select()
     .single()
 

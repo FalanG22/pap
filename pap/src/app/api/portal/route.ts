@@ -39,7 +39,6 @@ export async function POST(request: Request) {
     order_id: o.id,
     date: o.created_at,
     status: o.status,
-    pdf_url: o.pdf_url,
     category: o.diagnosis?.[0]?.general_category || null,
     descriptive_dx: o.diagnosis?.[0]?.descriptive_dx || null,
     is_signed: o.diagnosis?.[0]?.is_signed || false,

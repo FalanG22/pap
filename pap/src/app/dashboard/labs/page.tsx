@@ -10,7 +10,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus, Building2, Pencil } from "lucide-react";
+import { Plus, Building2, Pencil, Mail } from "lucide-react";
 import { toast } from "sonner";
 
 type Tenant = {
@@ -28,6 +28,11 @@ export default function LabsPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
+  const [createEmail, setCreateEmail] = useState("");
+  const [createFullName, setCreateFullName] = useState("");
+  const [createdResult, setCreatedResult] = useState<Record<string, unknown> | null>(null);
+  const [sendingEmail, setSendingEmail] = useState(false);
+  const [sendError, setSendError] = useState<string | null>(null);
   const [editOpen, setEditOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<Tenant | null>(null);
   const [editName, setEditName] = useState("");
@@ -51,16 +56,17 @@ export default function LabsPage() {
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !slug) { toast.error("Nombre y slug son requeridos"); return; }
+    if (!createEmail) { toast.error("Email es requerido"); return; }
     setSubmitting(true);
     try {
       const res = await fetch("/api/tenants", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, slug }),
+        body: JSON.stringify({ name, slug, email: createEmail, full_name: createFullName || name }),
       });
       if (!res.ok) { const err = await res.json(); toast.error(err.error || "Error al crear"); return; }
-      toast.success(`Laboratorio "${name}" creado`);
-      setCreateOpen(false); setName(""); setSlug("");
+      setCreatedResult(await res.json());
+      setCreateOpen(false);
       fetchTenants();
     } catch { toast.error("Error de conexión"); }
     finally { setSubmitting(false); }
@@ -94,6 +100,28 @@ export default function LabsPage() {
     finally { setSubmitting(false); }
   };
 
+  const handleSendCredentials = async () => {
+    if (!createdResult) return;
+    setSendingEmail(true);
+    setSendError(null);
+    try {
+      const res = await fetch("/api/users/send-credentials", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_id: createdResult.user_id,
+          tenant_id: createdResult.id,
+          password: createdResult.generated_password,
+        }),
+      })
+      const data = await res.json();
+      if (!res.ok) { setSendError(data.error || "Error al enviar email"); return; }
+      setCreatedResult(prev => ({ ...prev, email_sent: true }));
+      toast.success("Credenciales enviadas por email");
+    } catch { setSendError("Error de conexión") }
+    finally { setSendingEmail(false) }
+  };
+
   const handleDelete = async (id: string) => {
     setSubmitting(true);
     try {
@@ -114,31 +142,86 @@ export default function LabsPage() {
           <h1 className="text-2xl font-heading font-bold tracking-tight">Laboratorios</h1>
           <p className="text-sm text-muted-foreground mt-0.5">Gestioná los laboratorios del sistema</p>
         </div>
-        <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+        <Dialog open={createOpen || !!createdResult} onOpenChange={(open) => { setCreateOpen(open); if (!open) { setCreatedResult(null); setSendError(null); } }}>
           <DialogTrigger className="inline-flex items-center justify-center gap-1.5 h-10 px-4 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-colors text-sm font-medium cursor-pointer">
             <Plus className="w-4 h-4" /> Nuevo laboratorio
           </DialogTrigger>
           <DialogContent className="sm:max-w-sm">
             <DialogHeader>
-              <DialogTitle className="font-heading">Nuevo laboratorio</DialogTitle>
+              <DialogTitle className="font-heading">{createdResult ? "Laboratorio creado" : "Nuevo laboratorio"}</DialogTitle>
             </DialogHeader>
-            <form onSubmit={handleCreate} className="space-y-4 pt-2">
-              <div className="space-y-2">
-                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Nombre *</label>
-                <Input value={name} onChange={(e) => setName(e.target.value)}
-                  placeholder="Ej: Laboratorio Central" className="h-10" autoFocus required />
+            {createdResult ? (
+              <div className="space-y-4 pt-2">
+                <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-4 text-sm space-y-2">
+                  <p className="font-medium text-emerald-800">✓ {createdResult.name as string}</p>
+                  <p className="text-emerald-700">{createdResult.email as string}</p>
+                  {createdResult.email_sent ? (
+                    <p className="text-emerald-600 text-xs flex items-center gap-1">
+                      <Mail className="w-3 h-3" /> Credenciales enviadas por email
+                    </p>
+                  ) : (
+                    <>
+                      <div className="border-t border-emerald-200 pt-2 mt-2">
+                        <p className="text-xs text-emerald-700 mb-1">Contraseña generada:</p>
+                        <code className="block text-center text-lg font-bold tracking-widest bg-white rounded-lg p-2 text-emerald-900 select-all">
+                          {createdResult.generated_password as string}
+                        </code>
+                        <p className="text-xs text-emerald-600 mt-1">¿Querés enviar las credenciales por email?</p>
+                      </div>
+                      {createdResult.auth_error && (
+                        <p className="text-amber-700 text-xs mt-1">{createdResult.auth_error as string}</p>
+                      )}
+                      {sendError && (
+                        <p className="text-amber-700 text-xs mt-2">{sendError}</p>
+                      )}
+                    </>
+                  )}
+                </div>
+                <div className="flex gap-2">
+                  {!createdResult.email_sent && (
+                    <Button type="button" className="flex-1" onClick={handleSendCredentials} disabled={sendingEmail}>
+                      {sendingEmail ? "Enviando..." : <><Mail className="w-4 h-4" /> Enviar credenciales</>}
+                    </Button>
+                  )}
+                  <Button type="button" variant="outline" className="flex-1" onClick={() => {
+                    setCreatedResult(null);
+                    setSendError(null);
+                    setName(""); setSlug(""); setCreateEmail(""); setCreateFullName("");
+                  }}>
+                    {createdResult.email_sent ? "Cerrar" : "Cerrar sin enviar"}
+                  </Button>
+                </div>
               </div>
-              <div className="space-y-2">
-                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Slug *</label>
-                <Input value={slug} onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/\s+/g, '-'))}
-                  placeholder="Ej: lab-central" className="h-10 font-mono text-sm" required />
-                <p className="text-xs text-muted-foreground">Identificador único</p>
-              </div>
-              <div className="flex gap-2 pt-2">
-                <Button type="button" variant="outline" className="flex-1" onClick={() => setCreateOpen(false)}>Cancelar</Button>
-                <Button type="submit" className="flex-1" disabled={submitting}>{submitting ? "Creando..." : "Crear"}</Button>
-              </div>
-            </form>
+            ) : (
+              <form onSubmit={handleCreate} className="space-y-4 pt-2">
+                <div className="space-y-2">
+                  <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Nombre *</label>
+                  <Input value={name} onChange={(e) => setName(e.target.value)}
+                    placeholder="Ej: Laboratorio Central" className="h-10" autoFocus required />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Slug *</label>
+                  <Input value={slug} onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/\s+/g, '-'))}
+                    placeholder="Ej: lab-central" className="h-10 font-mono text-sm" required />
+                  <p className="text-xs text-muted-foreground">Identificador único</p>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Nombre del responsable</label>
+                  <Input value={createFullName} onChange={(e) => setCreateFullName(e.target.value)}
+                    placeholder="Ej: Dr. Juan Pérez" className="h-10" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Email de envío *</label>
+                  <Input type="email" value={createEmail} onChange={(e) => setCreateEmail(e.target.value)}
+                    placeholder="resultados@laboratorio.com" className="h-10" required />
+                  <p className="text-xs text-muted-foreground">Email para enviar los resultados y credenciales de acceso</p>
+                </div>
+                <div className="flex gap-2 pt-2">
+                  <Button type="button" variant="outline" className="flex-1" onClick={() => setCreateOpen(false)}>Cancelar</Button>
+                  <Button type="submit" className="flex-1" disabled={submitting}>{submitting ? "Creando..." : "Crear"}</Button>
+                </div>
+              </form>
+            )}
           </DialogContent>
         </Dialog>
       </div>

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
 import { renderCredentialsEmail } from '@/lib/email-credentials'
-import nodemailer from 'nodemailer'
+import { sendEmail } from '@/lib/send-email'
 
 async function getSuperAdmin(supabase: Awaited<ReturnType<typeof createClient>>) {
   const { data: { user } } = await supabase.auth.getUser()
@@ -50,7 +50,7 @@ export async function POST(request: Request) {
   const { data: lab } = await supabase
     .schema('_public')
     .from('tenants')
-    .select('name')
+    .select('name, domain')
     .eq('id', tenant_id)
     .single()
 
@@ -65,8 +65,6 @@ export async function POST(request: Request) {
   for (const x of settings || []) s[x.key] = x.value
 
   const loginUrl = `${s.app_domain || 'http://localhost:3000'}/login`
-  const fromEmail = s.from_email || 'resultados@papdiagnostico.com'
-  const fromName = s.from_name || 'PAP Diagnóstico'
 
   const html = renderCredentialsEmail({
     fullName: user.full_name,
@@ -76,53 +74,14 @@ export async function POST(request: Request) {
     labName,
   })
 
-  // Cloudflare Worker como método preferido
-  if (s.cloudflare_worker_url) {
-    try {
-      const cfRes = await fetch(s.cloudflare_worker_url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          to: user.email,
-          from: fromEmail,
-          from_name: fromName,
-          subject: `Acceso a PAP Diagnóstico — ${labName}`,
-          html,
-        }),
-      })
-      if (!cfRes.ok) {
-        const err = await cfRes.text()
-        return NextResponse.json({ error: `Cloudflare Worker: ${err}` }, { status: 500 })
-      }
-      return NextResponse.json({ success: true, email: user.email })
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Error desconocido'
-      return NextResponse.json({ error: `Cloudflare Worker: ${msg}` }, { status: 500 })
-    }
-  }
-
-  // Fallback a SMTP
-  if (!s.smtp_host || !s.smtp_port || !s.smtp_user || !s.smtp_pass) {
-    return NextResponse.json({ error: 'No hay método de envío configurado. Configurá SMTP o un Cloudflare Worker en Configuración.' }, { status: 500 })
-  }
-
-  const transporter = nodemailer.createTransport({
-    host: s.smtp_host,
-    port: parseInt(s.smtp_port, 10) || 587,
-    secure: s.smtp_secure === 'true',
-    auth: { user: s.smtp_user, pass: s.smtp_pass },
+  const result = await sendEmail(supabase, {
+    to: user.email,
+    subject: `Acceso a PAP Diagnóstico — ${labName}`,
+    html,
   })
 
-  try {
-    await transporter.sendMail({
-      from: `"${fromName}" <${fromEmail}>`,
-      to: user.email,
-      subject: `Acceso a PAP Diagnóstico — ${labName}`,
-      html,
-    })
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : 'Error desconocido'
-    return NextResponse.json({ error: `Error SMTP: ${msg}` }, { status: 500 })
+  if (!result.ok) {
+    return NextResponse.json({ error: result.error }, { status: 500 })
   }
 
   return NextResponse.json({ success: true, email: user.email })

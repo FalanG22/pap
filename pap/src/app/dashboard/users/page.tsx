@@ -57,6 +57,8 @@ export default function UsersPage() {
   const [editFullName, setEditFullName] = useState("");
   const [editActive, setEditActive] = useState(true);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [resetPwResult, setResetPwResult] = useState<string | null>(null);
+  const [resettingPw, setResettingPw] = useState(false);
 
   const load = async () => {
     try {
@@ -132,6 +134,24 @@ export default function UsersPage() {
   };
 
   const [sendError, setSendError] = useState<string | null>(null);
+
+  const handleResetPassword = async () => {
+    if (!editTarget) return;
+    setResettingPw(true);
+    setResetPwResult(null);
+    try {
+      const res = await fetch("/api/users/reset-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: editTarget.email }),
+      });
+      const data = await res.json();
+      if (!res.ok) { toast.error(data.error || "Error al resetear contraseña"); return; }
+      setResetPwResult(data.new_password);
+      toast.success("Contraseña reseteada");
+    } catch { toast.error("Error de conexión"); }
+    finally { setResettingPw(false); }
+  };
 
   const handleSendCredentials = async () => {
     if (!createdResult) return;
@@ -343,6 +363,15 @@ export default function UsersPage() {
                 ))}
               </div>
             )}
+            {resetPwResult && (
+              <div className="rounded-xl bg-amber-50 border border-amber-200 p-3 text-sm space-y-1">
+                <p className="text-xs font-medium text-amber-800">Nueva contraseña generada:</p>
+                <code className="block text-center text-lg font-bold tracking-widest bg-white rounded-lg p-2 text-amber-900 select-all">
+                  {resetPwResult}
+                </code>
+                <p className="text-xs text-amber-700">Copiala y enviásela al usuario.</p>
+              </div>
+            )}
             {confirmDelete === editTarget?.id ? (
               <div className="flex gap-2 pt-2">
                 <Button type="button" variant="outline" className="flex-1" onClick={() => setConfirmDelete(null)}>Cancelar</Button>
@@ -352,14 +381,22 @@ export default function UsersPage() {
                 </Button>
               </div>
             ) : (
-              <div className="flex gap-2 pt-2">
-                <Button type="button" variant="outline" className="flex-1" onClick={() => setEditOpen(false)}>Cancelar</Button>
-                <Button type="button" variant="ghost" className="text-destructive" onClick={() => setConfirmDelete(editTarget?.id || null)}>
-                  <Trash2 className="w-3.5 h-3.5" />
-                </Button>
-                <Button type="submit" className="flex-1" disabled={submitting}>
-                  {submitting ? "Guardando..." : "Guardar"}
-                </Button>
+              <div className="flex flex-col gap-2 pt-2">
+                <div className="flex gap-2">
+                  <Button type="button" variant="outline" className="flex-1" onClick={() => { setEditOpen(false); setResetPwResult(null); }}>Cancelar</Button>
+                  <Button type="submit" className="flex-1" disabled={submitting}>
+                    {submitting ? "Guardando..." : "Guardar"}
+                  </Button>
+                </div>
+                <div className="flex gap-2">
+                  <Button type="button" variant="secondary" className="flex-1 gap-1" disabled={resettingPw}
+                    onClick={handleResetPassword}>
+                    {resettingPw ? "..." : "Resetear contraseña"}
+                  </Button>
+                  <Button type="button" variant="ghost" className="flex-1 text-destructive" onClick={() => setConfirmDelete(editTarget?.id || null)}>
+                    <Trash2 className="w-3.5 h-3.5" /> Eliminar
+                  </Button>
+                </div>
               </div>
             )}
           </form>

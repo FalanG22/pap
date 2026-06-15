@@ -8,7 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { MacroInput } from "@/components/diagnosis/MacroInput";
 import { HistoryPanel } from "@/components/diagnosis/HistoryPanel";
 import { CategorySearchSelect } from "@/components/diagnosis/CategorySearchSelect";
-import { ArrowLeft, Save, Send, Download, User, FileText, Calendar, CheckCircle2, Clock, Zap } from "lucide-react";
+import { ArrowLeft, Save, Send, Download, User, FileText, Calendar, CheckCircle2, Clock, Zap, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 const SAMPLE_QUALITY_OPTIONS = [
@@ -73,11 +73,14 @@ export default function DiagnosisPage({ params }: { params: Promise<{ orderId: s
   const [patientDni, setPatientDni] = useState("—");
   const [patientInfo, setPatientInfo] = useState({ age: "—", sex: "—", email: "—" });
   const [history, setHistory] = useState<{ date: string; summary: string; category: string }[]>([]);
+  const [downloadedAt, setDownloadedAt] = useState<string | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [orderStatus, setOrderStatus] = useState("pending");
-  const [scheduleMode, setScheduleMode] = useState("immediate");
+  const [scheduleMode, setScheduleMode] = useState("manual");
   const [customDates, setCustomDates] = useState<number[]>([]);
   const [scheduleLoaded] = useState(false);
-  const isLocked = isSigned && orderStatus === "delivered";
+  const isLocked = isSigned && (orderStatus === "delivered" || orderStatus === "completed");
 
   const loadSchedule = async () => {
     try {
@@ -100,18 +103,21 @@ export default function DiagnosisPage({ params }: { params: Promise<{ orderId: s
         if (!res.ok) { toast.error("Error al cargar"); return; }
         const data = await res.json();
 
-        if (data.order?.patient && mounted) {
-          const p = data.order.patient;
-          setPatientName(p.full_name);
-          setPatientDni(p.dni);
-          setPatientInfo({
-            age: p.birth_date
-              ? `${Math.floor((Date.now() - new Date(p.birth_date).getTime()) / 31557600000)}a`
-              : "—",
-            sex: p.sex === "female" ? "Femenino" : p.sex === "male" ? "Masculino" : "—",
-            email: p.email || "—",
-          });
+        if (data.order && mounted) {
+          const p = data.order.patient || null;
+          if (p) {
+            setPatientName(p.full_name);
+            setPatientDni(p.dni);
+            setPatientInfo({
+              age: p.birth_date
+                ? `${Math.floor((Date.now() - new Date(p.birth_date).getTime()) / 31557600000)}a`
+                : "—",
+              sex: p.sex === "female" ? "Femenino" : p.sex === "male" ? "Masculino" : "—",
+              email: p.email || "—",
+            });
+          }
           setOrderStatus(data.order.status);
+          setDownloadedAt(data.order.downloaded_at || null);
         }
 
         if (data.diagnosis && mounted) {
@@ -193,9 +199,10 @@ export default function DiagnosisPage({ params }: { params: Promise<{ orderId: s
         setOrderStatus(data.status || "completed");
         if (data.sent) {
           toast.success("Diagnóstico firmado y enviado al paciente");
+        } else if (data.sendError) {
+          toast.warning(`Firmado, pero el email NO se envió: ${data.sendError}`);
         } else if (data.status === "delivered") {
-          const msg = data.sendError ? `: ${data.sendError}` : "";
-          toast.success(`Firmado y listo para entregar${msg}`);
+          toast.success("Firmado y listo para entregar");
         } else {
           toast.success("Diagnóstico firmado");
         }
@@ -207,6 +214,19 @@ export default function DiagnosisPage({ params }: { params: Promise<{ orderId: s
       toast.error("Error de conexión");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/orders/${orderId}`, { method: "DELETE" });
+      if (!res.ok) { const err = await res.json(); toast.error(err.error || "Error al eliminar"); setDeleting(false); return; }
+      toast.success("Orden eliminada");
+      router.push("/dashboard");
+    } catch {
+      toast.error("Error de conexión");
+      setDeleting(false);
     }
   };
 
@@ -482,6 +502,38 @@ export default function DiagnosisPage({ params }: { params: Promise<{ orderId: s
                 </p>
               </div>
             )}
+
+            <div className="border-t border-border/40 pt-4">
+              <Button variant={downloadedAt ? "outline" : "destructive"} size="sm" className="rounded-xl gap-1.5"
+                onClick={() => setShowDeleteConfirm(true)}
+                disabled={deleting || !!downloadedAt}
+                title={downloadedAt ? "No se puede eliminar: ya fue descargado por el laboratorio" : ""}
+              >
+                <Trash2 className="w-3.5 h-3.5" /> Eliminar orden
+              </Button>
+              {downloadedAt && (
+                <p className="text-xs text-muted-foreground mt-2">No se puede eliminar porque el laboratorio ya descargó este diagnóstico.</p>
+              )}
+              {showDeleteConfirm && (
+                <div className="mt-3 rounded-xl bg-destructive/5 border border-destructive/20 p-4 space-y-3">
+                  <p className="text-sm font-medium text-destructive">¿Eliminar esta orden?</p>
+                  <p className="text-xs text-muted-foreground">Esta acción no se puede deshacer. Se eliminarán el diagnóstico, el programador de envío y todos los datos asociados.</p>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" className="flex-1 rounded-lg text-xs"
+                      onClick={() => setShowDeleteConfirm(false)}
+                      disabled={deleting}
+                    >
+                      Cancelar
+                    </Button>
+                    <Button variant="destructive" size="sm" className="flex-1 rounded-lg text-xs" disabled={deleting}
+                      onClick={handleDelete}
+                    >
+                      {deleting ? "Eliminando..." : "Confirmar eliminación"}
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>

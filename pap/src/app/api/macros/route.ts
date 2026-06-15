@@ -2,8 +2,20 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
 import { getUserTenant } from '@/lib/get-tenant'
 
+async function isSuperAdmin(supabase: Awaited<ReturnType<typeof createClient>>) {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user?.email) return false
+  const { data: internalUser } = await supabase
+    .schema('_public').from('users').select('id').eq('email', user.email).maybeSingle()
+  if (!internalUser) return false
+  const { data: roles } = await supabase
+    .schema('_public').from('tenant_users').select('role').eq('user_id', internalUser.id)
+  return roles?.some(r => r.role === 'super_admin') ?? false
+}
+
 export async function GET(request: Request) {
   const supabase = await createClient()
+  if (!await isSuperAdmin(supabase)) return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
   const tenant = await getUserTenant(supabase)
   if (!tenant) return NextResponse.json({ error: 'No auth' }, { status: 401 })
 
@@ -23,6 +35,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   const supabase = await createClient()
+  if (!await isSuperAdmin(supabase)) return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
   const tenant = await getUserTenant(supabase)
   if (!tenant) return NextResponse.json({ error: 'No auth' }, { status: 401 })
 
@@ -51,6 +64,7 @@ export async function POST(request: Request) {
 
 export async function PATCH(request: Request) {
   const supabase = await createClient()
+  if (!await isSuperAdmin(supabase)) return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
   const tenant = await getUserTenant(supabase)
   if (!tenant) return NextResponse.json({ error: 'No auth' }, { status: 401 })
 
@@ -84,6 +98,7 @@ export async function PATCH(request: Request) {
 
 export async function DELETE(request: Request) {
   const supabase = await createClient()
+  if (!await isSuperAdmin(supabase)) return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
   const tenant = await getUserTenant(supabase)
   if (!tenant) return NextResponse.json({ error: 'No auth' }, { status: 401 })
 

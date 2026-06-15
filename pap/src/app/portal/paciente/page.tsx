@@ -12,7 +12,6 @@ type Diagnosis = {
   order_id: string;
   date: string;
   status: string;
-  pdf_url: string | null;
   category: string | null;
   descriptive_dx: string | null;
   is_signed: boolean;
@@ -73,7 +72,7 @@ export default function PatientPortalPage() {
     }
   };
 
-  const latestSigned = data?.diagnoses.find(d => d.is_signed && d.pdf_url);
+  const latestSigned = data?.diagnoses.find(d => d.is_signed);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -216,9 +215,9 @@ export default function PatientPortalPage() {
                               </p>
                             )}
                           </div>
-                          {d.pdf_url && (
+                          {d.is_signed && (
                             <a
-                              href={d.pdf_url}
+                              href={`/api/pdf/${d.order_id}`}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="shrink-0 w-10 h-10 rounded-xl bg-primary/8 flex items-center justify-center hover:bg-primary/15 transition-all hover:scale-105"
@@ -233,7 +232,9 @@ export default function PatientPortalPage() {
                 )}
 
                 {latestSigned && (
-                  <div className="rounded-xl bg-gradient-to-br from-primary/5 to-primary/3 border border-primary/15 p-4">
+                  <a href={`/api/pdf/${latestSigned.order_id}`} target="_blank" rel="noopener noreferrer"
+                    className="block rounded-xl bg-gradient-to-br from-primary/5 to-primary/3 border border-primary/15 p-4 hover:from-primary/10 hover:to-primary/5 transition-all no-underline"
+                  >
                     <div className="flex items-center gap-2 mb-1">
                       <FileText className="w-4 h-4 text-primary" />
                       <p className="text-sm font-medium text-primary">Último resultado firmado</p>
@@ -241,7 +242,7 @@ export default function PatientPortalPage() {
                     <p className="text-xs text-muted-foreground ml-6">
                       {latestSigned.category} &mdash; {new Date(latestSigned.signed_at!).toLocaleDateString("es-AR")}
                     </p>
-                  </div>
+                  </a>
                 )}
               </div>
             </>

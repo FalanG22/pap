@@ -45,6 +45,8 @@ export type Order = {
   pdf_token: string;
   pdf_url: string | null;
   notes: string | null;
+  downloaded_at: string | null;
+  downloaded_by: string | null;
   created_at: string;
   updated_at: string;
   patient?: Patient;
