@@ -79,10 +79,16 @@ export async function GET() {
         })
 
         if (sendRes.ok) {
-          await supabase
-            .from('send_schedule')
-            .update({ last_sent_at: new Date().toISOString(), next_send_at: null })
-            .eq('id', s.id)
+          await Promise.all([
+            supabase
+              .from('send_schedule')
+              .update({ last_sent_at: new Date().toISOString(), next_send_at: null })
+              .eq('id', s.id),
+            supabase
+              .from('order')
+              .update({ status: 'delivered' })
+              .eq('id', s.order_id),
+          ])
           sent++
         } else {
           failed++

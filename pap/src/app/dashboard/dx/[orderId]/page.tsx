@@ -169,11 +169,12 @@ export default function DiagnosisPage({ params }: { params: Promise<{ orderId: s
   };
 
   const saveSchedule = async () => {
-    await fetch("/api/send-schedule", {
+    const res = await fetch("/api/send-schedule", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ order_id: orderId, mode: scheduleMode, custom_dates: customDates }),
     });
+    if (!res.ok) console.warn("Error al guardar schedule:", await res.text());
   };
 
   const handleSign = async () => {
@@ -186,12 +187,21 @@ export default function DiagnosisPage({ params }: { params: Promise<{ orderId: s
     try {
       await saveSchedule();
       const res = await fetch(`/api/sign/${orderId}`, { method: "POST" });
-      if (res.ok) {
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.success) {
         setIsSigned(true);
-        toast.success("Diagnóstico firmado y enviado");
+        setOrderStatus(data.status || "completed");
+        if (data.sent) {
+          toast.success("Diagnóstico firmado y enviado al paciente");
+        } else if (data.status === "delivered") {
+          const msg = data.sendError ? `: ${data.sendError}` : "";
+          toast.success(`Firmado y listo para entregar${msg}`);
+        } else {
+          toast.success("Diagnóstico firmado");
+        }
         setTimeout(() => router.push("/dashboard"), 1500);
       } else {
-        toast.error("Error al firmar");
+        toast.error(data.error || "Error al firmar");
       }
     } catch {
       toast.error("Error de conexión");
