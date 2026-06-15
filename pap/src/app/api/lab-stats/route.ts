@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
-import { getUserTenant } from '@/lib/get-tenant'
 
 export async function GET() {
   const supabase = await createClient()
@@ -16,17 +15,44 @@ export async function GET() {
     .maybeSingle()
   if (!internalUser) return NextResponse.json({ error: 'Usuario no encontrado' }, { status: 403 })
 
-  // Obtener tenants del usuario
-  const { data: myTenants } = await supabase
+  // Verificar si es super_admin
+  const { data: roles } = await supabase
     .schema('_public')
     .from('tenant_users')
-    .select('role, tenant:tenant_id(*)')
+    .select('role')
     .eq('user_id', internalUser.id)
 
-  if (!myTenants || myTenants.length === 0) return NextResponse.json([])
+  const isSuperAdmin = roles?.some(r => r.role === 'super_admin') ?? false
 
-  const result = await Promise.all(myTenants.map(async (t) => {
-    const tenant = t.tenant as unknown as { id: string; name: string; slug: string; email?: string; is_active: boolean; created_at: string }
+  // Obtener tenants
+  let tenantsToFetch: { id: string; name: string; slug: string; email?: string; is_active: boolean; created_at: string; role?: string }[]
+  if (isSuperAdmin) {
+    const { data: allTenants } = await supabase
+      .schema('_public')
+      .from('tenants')
+      .select('*')
+      .order('created_at', { ascending: false })
+
+    tenantsToFetch = (allTenants || []).map(t => ({
+      ...(t as unknown as { id: string; name: string; slug: string; email?: string; is_active: boolean; created_at: string }),
+      role: 'super_admin',
+    }))
+  } else {
+    const { data: myTenants } = await supabase
+      .schema('_public')
+      .from('tenant_users')
+      .select('role, tenant:tenant_id(*)')
+      .eq('user_id', internalUser.id)
+
+    if (!myTenants || myTenants.length === 0) return NextResponse.json([])
+
+    tenantsToFetch = myTenants.map(t => ({
+      ...(t.tenant as unknown as { id: string; name: string; slug: string; email?: string; is_active: boolean; created_at: string }),
+      role: t.role as string,
+    }))
+  }
+
+  const result = await Promise.all(tenantsToFetch.map(async (tenant) => {
 
     // Obtener conteos de órdenes para este tenant
     const { data: counts } = await supabase
@@ -47,7 +73,7 @@ export async function GET() {
       email: tenant.email || null,
       is_active: tenant.is_active,
       created_at: tenant.created_at,
-      role: t.role,
+      role: tenant.role,
       stats: { total, pending, inProgress, completed, delivered },
     }
   }))
