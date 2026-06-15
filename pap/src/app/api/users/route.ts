@@ -75,8 +75,11 @@ export async function POST(request: Request) {
   const body = await request.json()
   const { email, full_name, tenant_id, role } = body
 
-  if (!email || !full_name || !tenant_id || !role) {
-    return NextResponse.json({ error: 'email, full_name, tenant_id y role son requeridos' }, { status: 400 })
+  if (!email || !full_name || !role) {
+    return NextResponse.json({ error: 'email, full_name y role son requeridos' }, { status: 400 })
+  }
+  if (role !== 'super_admin' && !tenant_id) {
+    return NextResponse.json({ error: 'tenant_id es requerido para este rol' }, { status: 400 })
   }
 
   if (!['super_admin', 'lab_admin', 'viewer'].includes(role)) {
@@ -105,27 +108,30 @@ export async function POST(request: Request) {
     userId = newUser.id
   }
 
-  const { data: existingLink } = await supabase
-    .schema('_public')
-    .from('tenant_users')
-    .select('id')
-    .eq('user_id', userId)
-    .eq('tenant_id', tenant_id)
-    .maybeSingle()
-
-  if (!existingLink) {
-    const { error: linkErr } = await supabase
+  // Vincular al tenant solo si no es super_admin
+  if (tenant_id) {
+    const { data: existingLink } = await supabase
       .schema('_public')
       .from('tenant_users')
-      .insert({ tenant_id, user_id: userId, role })
+      .select('id')
+      .eq('user_id', userId)
+      .eq('tenant_id', tenant_id)
+      .maybeSingle()
 
-    if (linkErr) return NextResponse.json({ error: linkErr.message }, { status: 500 })
-  } else {
-    await supabase
-      .schema('_public')
-      .from('tenant_users')
-      .update({ role })
-      .eq('id', existingLink.id)
+    if (!existingLink) {
+      const { error: linkErr } = await supabase
+        .schema('_public')
+        .from('tenant_users')
+        .insert({ tenant_id, user_id: userId, role })
+
+      if (linkErr) return NextResponse.json({ error: linkErr.message }, { status: 500 })
+    } else {
+      await supabase
+        .schema('_public')
+        .from('tenant_users')
+        .update({ role })
+        .eq('id', existingLink.id)
+    }
   }
 
   // Siempre generar contraseña y crear auth user

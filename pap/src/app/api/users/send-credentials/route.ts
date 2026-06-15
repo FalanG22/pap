@@ -32,8 +32,8 @@ export async function POST(request: Request) {
   const body = await request.json()
   const { user_id, tenant_id, password } = body
 
-  if (!user_id || !tenant_id || !password) {
-    return NextResponse.json({ error: 'user_id, tenant_id y password son requeridos' }, { status: 400 })
+  if (!user_id || !password) {
+    return NextResponse.json({ error: 'user_id y password son requeridos' }, { status: 400 })
   }
 
   const { data: user, error: userErr } = await supabase
@@ -47,14 +47,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Usuario no encontrado' }, { status: 404 })
   }
 
-  const { data: lab } = await supabase
-    .schema('_public')
-    .from('tenants')
-    .select('name, domain')
-    .eq('id', tenant_id)
-    .single()
-
-  const labName = (lab as unknown as { name: string })?.name || 'Laboratorio'
+  let labName = 'PAP Diagnóstico'
+  if (tenant_id) {
+    const { data: lab } = await supabase
+      .schema('_public')
+      .from('tenants')
+      .select('name')
+      .eq('id', tenant_id)
+      .single()
+    labName = (lab as unknown as { name: string })?.name || 'Laboratorio'
+  }
 
   const { data: settings } = await supabase
     .schema('_public')
@@ -76,7 +78,7 @@ export async function POST(request: Request) {
 
   const result = await sendEmail(supabase, {
     to: user.email,
-    subject: `Acceso a PAP Diagnóstico — ${labName}`,
+    subject: `Acceso a PAP Diagnóstico${labName !== 'PAP Diagnóstico' ? ` — ${labName}` : ''}`,
     html,
   })
 

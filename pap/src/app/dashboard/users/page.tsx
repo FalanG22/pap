@@ -76,7 +76,8 @@ export default function UsersPage() {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !fullName || !tenantId) { toast.error("Completá todos los campos"); return; }
+    if (!email || !fullName) { toast.error("Completá email y nombre"); return; }
+    if (role !== "super_admin" && !tenantId) { toast.error("Seleccioná un laboratorio"); return; }
     setSubmitting(true);
     setCreatedResult(null);
     setSendError(null);
@@ -84,7 +85,7 @@ export default function UsersPage() {
       const res = await fetch("/api/users", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, full_name: fullName, tenant_id: tenantId, role }),
+        body: JSON.stringify({ email, full_name: fullName, tenant_id: role === "super_admin" ? undefined : tenantId, role }),
       })
       const data = await res.json();
       if (!res.ok) { toast.error(data.error || "Error"); return; }
@@ -250,14 +251,16 @@ export default function UsersPage() {
                   <Input value={fullName} onChange={e => setFullName(e.target.value)}
                     placeholder="Nombre Apellido" className="h-10" required />
                 </div>
-                <div className="space-y-2">
-                  <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Laboratorio *</label>
-                  <select value={tenantId} onChange={e => setTenantId(e.target.value)}
-                    className="w-full h-10 rounded-lg border border-border bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring/50" required>
-                    <option value="">Seleccionar...</option>
-                    {tenants.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-                  </select>
-                </div>
+                {role !== "super_admin" && (
+                  <div className="space-y-2">
+                    <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Laboratorio *</label>
+                    <select value={tenantId} onChange={e => setTenantId(e.target.value)}
+                      className="w-full h-10 rounded-lg border border-border bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring/50" required>
+                      <option value="">Seleccionar...</option>
+                      {tenants.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                    </select>
+                  </div>
+                )}
                 <div className="space-y-2">
                   <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Rol</label>
                   <select value={role} onChange={e => setRole(e.target.value)}
