@@ -172,11 +172,20 @@ CREATE INDEX idx_audit_created ON audit_log(tenant_id, created_at DESC);
 CREATE OR REPLACE FUNCTION public.user_tenants()
 RETURNS TABLE(tenant_id UUID) AS $$
 BEGIN
-  RETURN QUERY
-  SELECT tu.tenant_id
-  FROM _public.users u
-  JOIN _public.tenant_users tu ON tu.user_id = u.id
-  WHERE u.email = auth.email();
+  -- Super admin: retorna TODOS los tenants
+  IF EXISTS (
+    SELECT 1 FROM _public.tenant_users tu
+    JOIN _public.users u ON u.id = tu.user_id
+    WHERE u.email = auth.email() AND tu.role = 'super_admin'
+  ) THEN
+    RETURN QUERY SELECT t.id FROM _public.tenants t;
+  ELSE
+    RETURN QUERY
+    SELECT tu.tenant_id
+    FROM _public.users u
+    JOIN _public.tenant_users tu ON tu.user_id = u.id
+    WHERE u.email = auth.email();
+  END IF;
 END;
 $$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
 
