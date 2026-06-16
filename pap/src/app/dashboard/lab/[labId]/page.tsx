@@ -53,7 +53,7 @@ export default function LabDetailPage() {
   const [dni, setDni] = useState("");
   const [fullName, setFullName] = useState("");
   const [birthDate, setBirthDate] = useState("");
-  const [sex, setSex] = useState("");
+  const [sex, setSex] = useState("female");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [submitting, setSubmitting] = useState(false);
