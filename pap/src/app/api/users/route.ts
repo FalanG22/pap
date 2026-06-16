@@ -174,8 +174,8 @@ export async function POST(request: Request) {
   if (adminErr) {
     if (adminErr.message?.includes('already exists') || adminErr.message?.includes('already registered')) {
       // Buscar el auth user por email para actualizar la contraseña con el ID correcto
-      const { data: authUsers } = await adminSupabase.auth.admin.listUsers()
-      const authUser = authUsers?.users?.find(u => u.email === email)
+      const { data: authUsers } = await adminSupabase.auth.admin.listUsers({ page: 1, perPage: 10000 })
+      const authUser = authUsers?.users?.find(u => u.email?.toLowerCase() === email.toLowerCase())
       if (authUser) {
         const { error: updateErr } = await adminSupabase.auth.admin.updateUserById(authUser.id, { password })
         if (updateErr) response.auth_error = updateErr.message

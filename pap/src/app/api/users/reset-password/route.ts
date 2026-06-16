@@ -54,8 +54,8 @@ export async function POST(request: Request) {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 
-  const { data: authUsers } = await adminSupabase.auth.admin.listUsers()
-  const authUser = authUsers?.users?.find(u => u.email === email)
+  const { data: authUsers } = await adminSupabase.auth.admin.listUsers({ page: 1, perPage: 10000 })
+  const authUser = authUsers?.users?.find(u => u.email?.toLowerCase() === email.toLowerCase())
 
   if (authUser) {
     const { error: updateErr } = await adminSupabase.auth.admin.updateUserById(authUser.id, { password: newPassword })
