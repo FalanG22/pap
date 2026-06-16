@@ -44,10 +44,10 @@ export async function POST(request: Request) {
   if (!sa) return NextResponse.json({ error: 'Solo super_admin' }, { status: 403 })
 
   const body = await request.json()
-  const { email } = body
+  const { email, password: customPassword } = body
   if (!email) return NextResponse.json({ error: 'email requerido' }, { status: 400 })
 
-  const newPassword = generatePassword()
+  const newPassword = (customPassword && customPassword.length >= 6) ? customPassword : generatePassword()
 
   const adminSupabase = createServiceClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

@@ -59,12 +59,26 @@ export default function LoginPage() {
     e.preventDefault();
     if (!email) return;
     setLoading(true);
+
+    const res = await fetch("/api/auth/check-email", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+    const { exists } = await res.json();
+
+    if (!exists) {
+      toast.error("Este email no está registrado en el sistema");
+      setLoading(false);
+      return;
+    }
+
     const sb = getSupabase();
     if (!sb) { toast.error("Error de conexión"); setLoading(false); return; }
     const { error } = await sb.auth.signInWithOtp({
       email,
       options: {
-        shouldCreateUser: true,
+        shouldCreateUser: false,
         emailRedirectTo: `${window.location.origin}/auth/callback`,
       },
     });

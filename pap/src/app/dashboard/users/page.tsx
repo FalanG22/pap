@@ -58,6 +58,8 @@ export default function UsersPage() {
   const [editEmail, setEditEmail] = useState("");
   const [editFullName, setEditFullName] = useState("");
   const [editActive, setEditActive] = useState(true);
+  const [editAutoGenerate, setEditAutoGenerate] = useState(true);
+  const [editCustomPassword, setEditCustomPassword] = useState("");
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [resetPwResult, setResetPwResult] = useState<string | null>(null);
   const [resettingPw, setResettingPw] = useState(false);
@@ -101,6 +103,8 @@ export default function UsersPage() {
     setEditEmail(u.email);
     setEditFullName(u.full_name);
     setEditActive(u.is_active);
+    setEditAutoGenerate(true);
+    setEditCustomPassword("");
     setConfirmDelete(null);
     setEditOpen(true);
   };
@@ -146,7 +150,7 @@ export default function UsersPage() {
       const res = await fetch("/api/users/reset-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: editTarget.email }),
+        body: JSON.stringify({ email: editTarget.email, password: editAutoGenerate ? undefined : editCustomPassword || undefined }),
       });
       const data = await res.json();
       if (!res.ok) { toast.error(data.error || "Error al resetear contraseña"); return; }
@@ -379,6 +383,17 @@ export default function UsersPage() {
                 ))}
               </div>
             )}
+            <div className="space-y-2 border-t border-border/50 pt-3">
+              <label className="flex items-center gap-2 text-xs font-medium text-muted-foreground uppercase tracking-wider cursor-pointer select-none">
+                <input type="checkbox" checked={editAutoGenerate} onChange={e => { setEditAutoGenerate(e.target.checked); setResetPwResult(null); }}
+                  className="rounded border-border" />
+                Generar contraseña automática
+              </label>
+              {!editAutoGenerate && (
+                <Input type="text" value={editCustomPassword} onChange={e => setEditCustomPassword(e.target.value)}
+                  placeholder="Contraseña personalizada" className="h-10 font-mono" minLength={6} />
+              )}
+            </div>
             {resetPwResult && (
               <div className="rounded-xl bg-amber-50 border border-amber-200 p-3 text-sm space-y-1">
                 <p className="text-xs font-medium text-amber-800">Nueva contraseña generada:</p>
