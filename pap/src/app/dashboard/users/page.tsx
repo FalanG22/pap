@@ -395,12 +395,15 @@ export default function UsersPage() {
               )}
             </div>
             {resetPwResult && (
-              <div className="rounded-xl bg-amber-50 border border-amber-200 p-3 text-sm space-y-1">
-                <p className="text-xs font-medium text-amber-800">Nueva contraseña generada:</p>
-                <code className="block text-center text-lg font-bold tracking-widest bg-white rounded-lg p-2 text-amber-900 select-all">
+              <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-3 text-sm space-y-1">
+                <p className="text-xs font-medium text-emerald-800 flex items-center gap-1.5">
+                  <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="currentColor"><path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"/></svg>
+                  Contraseña {editAutoGenerate ? 'generada' : 'actualizada'}
+                </p>
+                <code className="block text-center text-lg font-bold tracking-widest bg-white rounded-lg p-2 text-emerald-900 select-all">
                   {resetPwResult}
                 </code>
-                <p className="text-xs text-amber-700">Copiala y enviásela al usuario.</p>
+                <p className="text-xs text-emerald-700">Copiala y enviásela al usuario.</p>
               </div>
             )}
             {confirmDelete === editTarget?.id ? (
@@ -420,9 +423,11 @@ export default function UsersPage() {
                   </Button>
                 </div>
                 <div className="flex gap-2">
-                  <Button type="button" variant="secondary" className="flex-1 gap-1" disabled={resettingPw}
+                  <Button type="button" variant="secondary" className="flex-1 gap-1.5" disabled={resettingPw}
                     onClick={handleResetPassword}>
-                    {resettingPw ? "..." : "Resetear contraseña"}
+                    {resettingPw ? (
+                      <><svg className="w-3.5 h-3.5 animate-spin" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="2" opacity="0.3"/><path d="M14 8a6 6 0 00-6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg> Aplicando...</>
+                    ) : "Resetear contraseña"}
                   </Button>
                   <Button type="button" variant="ghost" className="flex-1 text-destructive" onClick={() => setConfirmDelete(editTarget?.id || null)}>
                     <Trash2 className="w-3.5 h-3.5" /> Eliminar
