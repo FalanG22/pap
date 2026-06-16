@@ -48,6 +48,8 @@ export default function UsersPage() {
   const [fullName, setFullName] = useState("");
   const [tenantId, setTenantId] = useState("");
   const [role, setRole] = useState("lab_admin");
+  const [autoGenerate, setAutoGenerate] = useState(true);
+  const [customPassword, setCustomPassword] = useState("");
   const [createdResult, setCreatedResult] = useState<Record<string, unknown> | null>(null);
   const [sendingEmail, setSendingEmail] = useState(false);
 
@@ -85,7 +87,7 @@ export default function UsersPage() {
       const res = await fetch("/api/users", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, full_name: fullName, tenant_id: role === "super_admin" ? undefined : tenantId, role }),
+        body: JSON.stringify({ email, full_name: fullName, tenant_id: role === "super_admin" ? undefined : tenantId, role, password: autoGenerate ? undefined : customPassword || undefined }),
       })
       const data = await res.json();
       if (!res.ok) { toast.error(data.error || "Error"); return; }
@@ -232,7 +234,7 @@ export default function UsersPage() {
                     setCreatedResult(null);
                     setSendError(null);
                     setCreateOpen(false);
-                    setEmail(""); setFullName(""); setTenantId(""); setRole("lab_admin");
+                    setEmail(""); setFullName(""); setTenantId(""); setRole("lab_admin"); setAutoGenerate(true); setCustomPassword("");
                     load();
                   }}>
                     {createdResult.email_sent ? "Cerrar" : "Cerrar sin enviar"}
@@ -261,6 +263,17 @@ export default function UsersPage() {
                     </select>
                   </div>
                 )}
+                <div className="space-y-2">
+                  <label className="flex items-center gap-2 text-xs font-medium text-muted-foreground uppercase tracking-wider cursor-pointer select-none">
+                    <input type="checkbox" checked={autoGenerate} onChange={e => setAutoGenerate(e.target.checked)}
+                      className="rounded border-border" />
+                    Generar contraseña automática
+                  </label>
+                  {!autoGenerate && (
+                    <Input type="text" value={customPassword} onChange={e => setCustomPassword(e.target.value)}
+                      placeholder="Contraseña personalizada" className="h-10 font-mono" minLength={6} />
+                  )}
+                </div>
                 <div className="space-y-2">
                   <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Rol</label>
                   <select value={role} onChange={e => setRole(e.target.value)}

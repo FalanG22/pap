@@ -73,7 +73,7 @@ export async function POST(request: Request) {
   if (!sa) return NextResponse.json({ error: 'Solo super_admin' }, { status: 403 })
 
   const body = await request.json()
-  const { email, full_name, tenant_id, role } = body
+  const { email, full_name, tenant_id, role, password: customPassword } = body
 
   if (!email || !full_name || !role) {
     return NextResponse.json({ error: 'email, full_name y role son requeridos' }, { status: 400 })
@@ -147,8 +147,8 @@ export async function POST(request: Request) {
     }
   }
 
-  // Siempre generar contraseña y crear auth user
-  const password = generatePassword()
+  // Usar contraseña personalizada o generar automáticamente
+  const password = (customPassword && customPassword.length >= 6) ? customPassword : generatePassword()
 
   const adminSupabase = createServiceClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
