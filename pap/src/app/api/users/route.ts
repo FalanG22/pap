@@ -86,6 +86,19 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Rol inválido' }, { status: 400 })
   }
 
+  // Super admin sin tenant: asignar al primer tenant disponible
+  let effectiveTenantId = tenant_id
+  if (role === 'super_admin' && !effectiveTenantId) {
+    const { data: firstTenant } = await supabase
+      .schema('_public')
+      .from('tenants')
+      .select('id')
+      .eq('is_active', true)
+      .limit(1)
+      .maybeSingle()
+    effectiveTenantId = firstTenant?.id || null
+  }
+
   const { data: existing } = await supabase
     .schema('_public')
     .from('users')
@@ -108,21 +121,21 @@ export async function POST(request: Request) {
     userId = newUser.id
   }
 
-  // Vincular al tenant solo si no es super_admin
-  if (tenant_id) {
+  // Vincular al tenant
+  if (effectiveTenantId) {
     const { data: existingLink } = await supabase
       .schema('_public')
       .from('tenant_users')
       .select('id')
       .eq('user_id', userId)
-      .eq('tenant_id', tenant_id)
+      .eq('tenant_id', effectiveTenantId)
       .maybeSingle()
 
     if (!existingLink) {
       const { error: linkErr } = await supabase
         .schema('_public')
         .from('tenant_users')
-        .insert({ tenant_id, user_id: userId, role })
+        .insert({ tenant_id: effectiveTenantId, user_id: userId, role })
 
       if (linkErr) return NextResponse.json({ error: linkErr.message }, { status: 500 })
     } else {
@@ -153,7 +166,7 @@ export async function POST(request: Request) {
     id: userId,
     email,
     full_name,
-    tenant_id,
+    tenant_id: effectiveTenantId,
     role,
     generated_password: password,
   }
