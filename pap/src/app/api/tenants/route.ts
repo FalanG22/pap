@@ -59,12 +59,13 @@ export async function POST(request: Request) {
   if (!internalUser) return NextResponse.json({ error: 'Solo super_admin' }, { status: 403 })
 
   const body = await request.json()
-  const { name, slug, email, full_name } = body
+  const { name, slug, full_name } = body
+  let { email } = body
   if (!name || !slug) {
     return NextResponse.json({ error: 'name y slug son requeridos' }, { status: 400 })
   }
   if (!email) {
-    return NextResponse.json({ error: 'email es requerido' }, { status: 400 })
+    email = `${slug.replace(/-/g, '.')}@syspap.com`
   }
 
   const { data: tenantId, error: rpcErr } = await supabase

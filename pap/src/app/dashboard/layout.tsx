@@ -8,18 +8,23 @@ import {
   LayoutDashboard,
   Building2,
   Users,
+  UserRound,
   FileText,
   Settings,
   LogOut,
   ChevronLeft,
   ChevronRight,
   Menu,
+  Receipt,
+  Microscope,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const superAdminNav = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/dashboard/labs", label: "Laboratorios", icon: Building2 },
+  { href: "/dashboard/pacientes", label: "Pacientes", icon: UserRound },
+  { href: "/dashboard/labs", label: "Doctores", icon: Building2 },
+  { href: "/dashboard/facturacion", label: "Facturación", icon: Receipt },
   { href: "/dashboard/users", label: "Usuarios", icon: Users },
   { href: "/dashboard/macros", label: "Macros", icon: FileText },
   { href: "/dashboard/settings", label: "Configuración", icon: Settings },
@@ -27,6 +32,8 @@ const superAdminNav = [
 
 const labNav = [
   { href: "/dashboard", label: "Panel", icon: LayoutDashboard },
+  { href: "/dashboard/pacientes", label: "Pacientes", icon: UserRound },
+  { href: "/dashboard/facturacion", label: "Facturación", icon: Receipt },
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -80,14 +87,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           "flex items-center h-16 border-b border-border/40 px-4",
           collapsed ? "justify-center" : "gap-3"
         )}>
-          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-heading font-bold text-sm shadow-sm shrink-0">
-            P
+          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground shadow-sm shrink-0">
+            <Microscope className="w-4 h-4" />
           </div>
           {!collapsed && (
             <div className="min-w-0">
               <p className="text-sm font-heading font-bold leading-tight">PAP</p>
               <p className="text-[10px] text-muted-foreground leading-tight truncate">
-                {isSuperAdmin ? "Diagnóstico" : labName || "Laboratorio"}
+                {isSuperAdmin ? "Diagnóstico" : labName || "Doctor"}
               </p>
             </div>
           )}

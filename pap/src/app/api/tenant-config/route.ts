@@ -24,7 +24,7 @@ export async function PATCH(request: Request) {
   if (!tenant) return NextResponse.json({ error: 'No auth' }, { status: 401 })
 
   const body = await request.json()
-  const { signature_url, stamp_url, show_signature, show_stamp } = body
+  const { signature_url, stamp_url, show_signature, show_stamp, stamp_size, custom_sample_quality_options } = body
 
   // Obtener config actual
   const { data: current } = await supabase
@@ -40,6 +40,8 @@ export async function PATCH(request: Request) {
   if (stamp_url !== undefined) config.stamp_url = stamp_url
   if (show_signature !== undefined) config.show_signature = show_signature
   if (show_stamp !== undefined) config.show_stamp = show_stamp
+  if (stamp_size !== undefined) config.stamp_size = stamp_size
+  if (custom_sample_quality_options !== undefined) config.custom_sample_quality_options = custom_sample_quality_options
 
   const { error } = await supabase
     .schema('_public')

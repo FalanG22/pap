@@ -51,7 +51,7 @@ export async function POST(
     const labName = (lab?.name as string) || 'Laboratorio'
     const labEmail = (lab as { email?: string } | undefined)?.email
 
-    // Enviar al email del laboratorio donde se generó el diagnóstico
+    // Enviar al email del Doctor donde se generó el diagnóstico
     const patientEmail = (orderData?.patient as { email?: string } | undefined)?.email
     const recipient = labEmail || patientEmail
 

@@ -21,7 +21,7 @@ export async function DELETE(
   }
 
   if (order.downloaded_at) {
-    return NextResponse.json({ error: 'No se puede eliminar: el diagnóstico ya fue descargado por el laboratorio' }, { status: 403 })
+    return NextResponse.json({ error: 'No se puede eliminar: el diagnóstico ya fue descargado por el Doctor' }, { status: 403 })
   }
 
   const { error: deleteErr } = await supabase

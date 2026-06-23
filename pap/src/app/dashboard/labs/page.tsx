@@ -27,16 +27,14 @@ export default function LabsPage() {
   const [loading, setLoading] = useState(true);
   const [createOpen, setCreateOpen] = useState(false);
   const [name, setName] = useState("");
-  const [slug, setSlug] = useState("");
   const [createEmail, setCreateEmail] = useState("");
-  const [createFullName, setCreateFullName] = useState("");
   const [createdResult, setCreatedResult] = useState<Record<string, unknown> | null>(null);
   const [sendingEmail, setSendingEmail] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
   const [editOpen, setEditOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<Tenant | null>(null);
   const [editName, setEditName] = useState("");
-  const [editSlug, setEditSlug] = useState("");
+
   const [editEmail, setEditEmail] = useState("");
   const [editActive, setEditActive] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -46,7 +44,7 @@ export default function LabsPage() {
     try {
       const res = await fetch("/api/tenants");
       if (res.ok) setTenants(await res.json());
-      else toast.error("Error al cargar laboratorios");
+      else toast.error("Error al cargar doctores");
     } catch { toast.error("Error de conexión"); }
     finally { setLoading(false); }
   };
@@ -55,14 +53,19 @@ export default function LabsPage() {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !slug) { toast.error("Nombre y slug son requeridos"); return; }
+    if (!name) { toast.error("Nombre es requerido"); return; }
     if (!createEmail) { toast.error("Email es requerido"); return; }
+    const slug = name.toLowerCase()
+      .replace(/[^\w\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-+|-+$/g, '');
     setSubmitting(true);
     try {
       const res = await fetch("/api/tenants", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, slug, email: createEmail, full_name: createFullName || name }),
+        body: JSON.stringify({ name, slug, email: createEmail, full_name: name }),
       });
       if (!res.ok) { const err = await res.json(); toast.error(err.error || "Error al crear"); return; }
       setCreatedResult(await res.json());
@@ -75,7 +78,7 @@ export default function LabsPage() {
   const handleEdit = (t: Tenant) => {
     setEditTarget(t);
     setEditName(t.name);
-    setEditSlug(t.slug);
+
     setEditEmail(t.email || "");
     setEditActive(t.is_active);
     setConfirmDelete(null);
@@ -84,16 +87,26 @@ export default function LabsPage() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editTarget || !editName || !editSlug) { toast.error("Nombre y slug son requeridos"); return; }
+    if (!editTarget || !editName) { toast.error("Nombre es requerido"); return; }
     setSubmitting(true);
     try {
       const res = await fetch("/api/tenants", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: editTarget.id, name: editName, slug: editSlug, email: editEmail || null, is_active: editActive }),
+        body: JSON.stringify({
+          id: editTarget.id,
+          name: editName,
+          slug: editName.toLowerCase()
+            .replace(/[^\w\s-]/g, '')
+            .replace(/\s+/g, '-')
+            .replace(/-+/g, '-')
+            .replace(/^-+|-+$/g, ''),
+          email: editEmail || null,
+          is_active: editActive,
+        }),
       });
       if (!res.ok) { const err = await res.json(); toast.error(err.error || "Error al guardar"); return; }
-      toast.success("Laboratorio actualizado");
+      toast.success("Doctor actualizado");
       setEditOpen(false);
       fetchTenants();
     } catch { toast.error("Error de conexión"); }
@@ -127,7 +140,7 @@ export default function LabsPage() {
     try {
       const res = await fetch(`/api/tenants?id=${id}`, { method: "DELETE" });
       if (!res.ok) { const err = await res.json(); toast.error(err.error || "Error al eliminar"); return; }
-      toast.success("Laboratorio eliminado");
+      toast.success("Doctor eliminado");
       setEditOpen(false);
       setConfirmDelete(null);
       fetchTenants();
@@ -139,16 +152,16 @@ export default function LabsPage() {
     <div className="px-6 py-6 max-w-4xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-heading font-bold tracking-tight">Laboratorios</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Gestioná los laboratorios del sistema</p>
+          <h1 className="text-2xl font-heading font-bold tracking-tight">Doctores</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">Gestioná los doctores del sistema</p>
         </div>
-        <Dialog open={createOpen || !!createdResult} onOpenChange={(open) => { setCreateOpen(open); if (!open) { setCreatedResult(null); setSendError(null); } }}>
+        <Dialog open={createOpen || !!createdResult} onOpenChange={(open) => { setCreateOpen(open); if (!open) { setCreatedResult(null); setSendError(null); setName(""); setCreateEmail(""); } }}>
           <DialogTrigger className="inline-flex items-center justify-center gap-1.5 h-10 px-4 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-colors text-sm font-medium cursor-pointer">
-            <Plus className="w-4 h-4" /> Nuevo laboratorio
+            <Plus className="w-4 h-4" /> Nuevo Doctor
           </DialogTrigger>
           <DialogContent className="sm:max-w-sm">
             <DialogHeader>
-              <DialogTitle className="font-heading">{createdResult ? "Laboratorio creado" : "Nuevo laboratorio"}</DialogTitle>
+              <DialogTitle className="font-heading">{createdResult ? "Doctor creado" : "Nuevo Doctor"}</DialogTitle>
             </DialogHeader>
             {createdResult ? (
               <div className="space-y-4 pt-2">
@@ -186,7 +199,7 @@ export default function LabsPage() {
                   <Button type="button" variant="outline" className="flex-1" onClick={() => {
                     setCreatedResult(null);
                     setSendError(null);
-                    setName(""); setSlug(""); setCreateEmail(""); setCreateFullName("");
+                    setName(""); setCreateEmail("");
                   }}>
                     {createdResult.email_sent ? "Cerrar" : "Cerrar sin enviar"}
                   </Button>
@@ -197,23 +210,12 @@ export default function LabsPage() {
                 <div className="space-y-2">
                   <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Nombre *</label>
                   <Input value={name} onChange={(e) => setName(e.target.value)}
-                    placeholder="Ej: Laboratorio Central" className="h-10" autoFocus required />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Slug *</label>
-                  <Input value={slug} onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/\s+/g, '-'))}
-                    placeholder="Ej: lab-central" className="h-10 font-mono text-sm" required />
-                  <p className="text-xs text-muted-foreground">Identificador único</p>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Nombre del responsable</label>
-                  <Input value={createFullName} onChange={(e) => setCreateFullName(e.target.value)}
-                    placeholder="Ej: Dr. Juan Pérez" className="h-10" />
+                    placeholder="Ej: Dr. Juan Pérez" className="h-10" autoFocus required />
                 </div>
                 <div className="space-y-2">
                   <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Email de envío *</label>
                   <Input type="email" value={createEmail} onChange={(e) => setCreateEmail(e.target.value)}
-                    placeholder="resultados@laboratorio.com" className="h-10" required />
+                    placeholder="doctor@correo.com" className="h-10" required />
                   <p className="text-xs text-muted-foreground">Email para enviar los resultados y credenciales de acceso</p>
                 </div>
                 <div className="flex gap-2 pt-2">
@@ -237,8 +239,8 @@ export default function LabsPage() {
           <div className="w-14 h-14 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-4">
             <Building2 className="w-6 h-6 text-muted-foreground" />
           </div>
-          <p className="text-muted-foreground font-medium">No hay laboratorios registrados</p>
-          <p className="text-sm text-muted-foreground/60 mt-1">Creá tu primer laboratorio para empezar</p>
+          <p className="text-muted-foreground font-medium">No hay doctores registrados</p>
+          <p className="text-sm text-muted-foreground/60 mt-1">Creá tu primer Doctor para empezar</p>
         </div>
       ) : (
         <div className="space-y-2">
@@ -275,7 +277,7 @@ export default function LabsPage() {
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle className="font-heading">Editar laboratorio</DialogTitle>
+            <DialogTitle className="font-heading">Editar Doctor</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSave} className="space-y-4 pt-2">
             <div className="space-y-2">
@@ -283,20 +285,15 @@ export default function LabsPage() {
               <Input value={editName} onChange={(e) => setEditName(e.target.value)} className="h-10" required />
             </div>
             <div className="space-y-2">
-              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Slug *</label>
-              <Input value={editSlug} onChange={(e) => setEditSlug(e.target.value.toLowerCase().replace(/\s+/g, '-'))}
-                className="h-10 font-mono text-sm" required />
-            </div>
-            <div className="space-y-2">
               <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Email de envío</label>
               <Input type="email" value={editEmail} onChange={(e) => setEditEmail(e.target.value)}
-                placeholder="resultados@laboratorio.com" className="h-10" />
+                placeholder="doctor@correo.com" className="h-10" />
             </div>
             <div className="flex items-center gap-2">
               <label className="text-xs font-medium text-muted-foreground cursor-pointer flex items-center gap-2">
                 <input type="checkbox" checked={editActive} onChange={(e) => setEditActive(e.target.checked)}
                   className="rounded border-border" />
-                Laboratorio activo
+                Doctor activo
               </label>
             </div>
             {confirmDelete === editTarget?.id ? (

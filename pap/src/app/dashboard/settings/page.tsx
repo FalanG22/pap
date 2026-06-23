@@ -262,7 +262,7 @@ export default function SettingsPage() {
                   </div>
                   <div>
                     <h3 className="font-medium text-sm">Sello</h3>
-                    <p className="text-xs text-muted-foreground">Imagen PNG del sello del laboratorio (aparece en el PDF)</p>
+                    <p className="text-xs text-muted-foreground">Imagen PNG del sello del Doctor (aparece en el PDF)</p>
                   </div>
                 </div>
                 {tenantConfig.stamp_url && (

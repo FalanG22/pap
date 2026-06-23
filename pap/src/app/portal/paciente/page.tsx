@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Search, Download, FileText, History, ArrowLeft, Shield } from "lucide-react";
+import { Search, Download, FileText, History, ArrowLeft, Shield, Microscope } from "lucide-react";
 
 type Diagnosis = {
   order_id: string;
@@ -80,8 +80,8 @@ export default function PatientPortalPage() {
       <header className="border-b border-border/40 bg-background/80 backdrop-blur-md">
         <div className="max-w-2xl mx-auto flex items-center justify-center h-14 px-4 relative">
           <Link href="/" className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-heading font-bold text-xs">
-              P
+            <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center text-primary-foreground">
+              <Microscope className="w-3.5 h-3.5" />
             </div>
             <span className="text-sm font-heading font-bold tracking-tight">PAP Diagnóstico</span>
           </Link>
@@ -217,7 +217,7 @@ export default function PatientPortalPage() {
                           </div>
                           {d.is_signed && (
                             <a
-                              href={`/api/pdf/${d.order_id}`}
+                              href={`/api/portal/pdf/${d.order_id}?dni=${encodeURIComponent(data.patient_dni)}&token=${encodeURIComponent(token)}`}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="shrink-0 w-10 h-10 rounded-xl bg-primary/8 flex items-center justify-center hover:bg-primary/15 transition-all hover:scale-105"
@@ -232,7 +232,7 @@ export default function PatientPortalPage() {
                 )}
 
                 {latestSigned && (
-                  <a href={`/api/pdf/${latestSigned.order_id}`} target="_blank" rel="noopener noreferrer"
+                  <a href={`/api/portal/pdf/${latestSigned.order_id}?dni=${encodeURIComponent(data.patient_dni)}&token=${encodeURIComponent(token)}`} target="_blank" rel="noopener noreferrer"
                     className="block rounded-xl bg-gradient-to-br from-primary/5 to-primary/3 border border-primary/15 p-4 hover:from-primary/10 hover:to-primary/5 transition-all no-underline"
                   >
                     <div className="flex items-center gap-2 mb-1">

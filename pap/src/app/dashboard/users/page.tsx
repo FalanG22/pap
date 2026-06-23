@@ -81,7 +81,7 @@ export default function UsersPage() {
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !fullName) { toast.error("Completá email y nombre"); return; }
-    if (role !== "super_admin" && !tenantId) { toast.error("Seleccioná un laboratorio"); return; }
+    if (role !== "super_admin" && !tenantId) { toast.error("Seleccioná un Doctor"); return; }
     setSubmitting(true);
     setCreatedResult(null);
     setSendError(null);
@@ -259,7 +259,7 @@ export default function UsersPage() {
                 </div>
                 {role !== "super_admin" && (
                   <div className="space-y-2">
-                    <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Laboratorio *</label>
+                    <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Doctor *</label>
                     <select value={tenantId} onChange={e => setTenantId(e.target.value)}
                       className="w-full h-10 rounded-lg border border-border bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring/50" required>
                       <option value="">Seleccionar...</option>
@@ -282,7 +282,7 @@ export default function UsersPage() {
                   <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Rol</label>
                   <select value={role} onChange={e => setRole(e.target.value)}
                     className="w-full h-10 rounded-lg border border-border bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring/50">
-                    <option value="lab_admin">Admin de Laboratorio</option>
+                    <option value="lab_admin">Admin de Doctor</option>
                     <option value="viewer">Solo ver</option>
                     <option value="super_admin">Super Admin</option>
                   </select>

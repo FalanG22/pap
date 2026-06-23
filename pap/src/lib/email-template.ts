@@ -87,11 +87,11 @@ export function renderResultEmail(data: EmailData): string {
         ${labPortalUrl ? `
         <tr><td style="border-top:1px solid #e5e7eb;padding:16px 0 0;text-align:center">
           <p style="margin:0 0 10px;font-size:13px;color:#6b7280;line-height:1.5">
-            Ingresá al portal del laboratorio para gestionar todas las órdenes y diagnósticos.
+            Ingresá al portal del Doctor para gestionar todas las órdenes y diagnósticos.
           </p>
           <a href="${labPortalUrl}"
              style="display:inline-block;padding:14px 32px;background:#ffffff;color:#4f46e5;font-size:15px;font-weight:600;text-decoration:none;border-radius:12px;border:1.5px solid #4f46e5">
-            Ir al portal del laboratorio
+            Ir al portal del Doctor
           </a>
         </td></tr>` : ''}
       </table>

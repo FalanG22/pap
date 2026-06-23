@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Fraunces, DM_Sans } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
@@ -17,9 +17,17 @@ const dmSans = DM_Sans({
   display: "swap",
 });
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+};
+
 export const metadata: Metadata = {
   title: "PAP Diagnóstico — Sistema de Gestión Citológica",
-  description: "Plataforma SaaS multi-laboratorio para diagnóstico de Papanicolaou",
+  description: "Plataforma SaaS para diagnóstico de Papanicolaou",
+  icons: {
+    icon: "/microscope.svg",
+  },
 };
 
 export default function RootLayout({

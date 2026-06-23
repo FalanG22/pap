@@ -52,7 +52,7 @@ export type Order = {
   patient?: Patient;
 };
 
-export type SampleQuality = 'adequate' | 'inadequate';
+export type SampleQuality = string;
 
 export type Diagnosis = {
   id: string;
@@ -106,4 +106,64 @@ export type AuditLog = {
   metadata: Record<string, unknown>;
   ip_address: string | null;
   created_at: string;
+};
+
+export type AfipConfig = {
+  id: string;
+  tenant_id: string;
+  cuit: string;
+  environment: 'homologacion' | 'produccion';
+  punto_venta: number;
+  certificate_crt: string | null;
+  certificate_key: string | null;
+  certificate_key_pass: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type AfipInvoiceResult = {
+  cae: string;
+  cae_vto: string;
+  comprobante_numero: number;
+  resultado: string;
+  observaciones?: string[];
+};
+
+export type TenantBillingConfig = {
+  id: string;
+  tenant_id: string;
+  cost_per_diagnosis: number;
+  currency: string;
+  billing_email: string | null;
+  billing_frequency: 'weekly' | 'biweekly' | 'monthly' | 'custom';
+  billing_day: number;
+  custom_days: number[];
+  next_billing_date: string | null;
+  last_billing_date: string | null;
+  invoice_prefix: string;
+  invoice_counter: number;
+  is_active: boolean;
+  notes: string | null;
+  updated_at: string;
+};
+
+export type InvoiceStatus = 'pending' | 'sent' | 'paid' | 'cancelled';
+
+export type Invoice = {
+  id: string;
+  tenant_id: string;
+  invoice_number: string;
+  period_start: string;
+  period_end: string;
+  total_diagnoses: number;
+  unit_cost: number;
+  total_amount: number;
+  status: InvoiceStatus;
+  sent_at: string | null;
+  paid_at: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+  tenant?: { id: string; name: string; slug: string };
 };

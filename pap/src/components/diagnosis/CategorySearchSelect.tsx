@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Search, Check, ChevronDown } from "lucide-react";
+import { Search, Check, ChevronDown, Plus } from "lucide-react";
 
 type Props = {
   items: string[];
@@ -10,9 +10,10 @@ type Props = {
   onChange: (value: string) => void;
   disabled?: boolean;
   placeholder?: string;
+  onCreate?: (value: string) => void;
 };
 
-export function CategorySearchSelect({ items, groups, value, onChange, disabled, placeholder }: Props) {
+export function CategorySearchSelect({ items, groups, value, onChange, disabled, placeholder, onCreate }: Props) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const ref = useRef<HTMLDivElement>(null);
@@ -30,6 +31,9 @@ export function CategorySearchSelect({ items, groups, value, onChange, disabled,
         .map((item, idx) => ({ item, idx }))
         .filter(({ item }) => item.toLowerCase().includes(query.toLowerCase()))
     : items.map((item, idx) => ({ item, idx }));
+
+  const exactMatch = query && items.some(item => item.toLowerCase() === query.toLowerCase());
+  const showCreate = onCreate && query && !exactMatch;
 
   return (
     <div ref={ref} className="relative">
@@ -62,38 +66,50 @@ export function CategorySearchSelect({ items, groups, value, onChange, disabled,
           </div>
 
           <div className="overflow-y-auto max-h-[260px]">
-            {filtered.length === 0 ? (
+            {filtered.length === 0 && !showCreate ? (
               <p className="text-center py-4 text-xs text-muted-foreground">Sin resultados</p>
             ) : (
-              filtered.map(({ item, idx }) => {
-                const group = groups.find((g) => idx >= g.start && idx <= g.end);
-                const isFirstInGroup = idx === 0 || groups.some((g) => g.end === idx - 1);
-                const showGroup = group && !query && (idx === group.start);
+              <>
+                {filtered.map(({ item, idx }) => {
+                  const group = groups.find((g) => idx >= g.start && idx <= g.end);
+                  const isFirstInGroup = idx === 0 || groups.some((g) => g.end === idx - 1);
+                  const showGroup = group && !query && (idx === group.start);
 
-                return (
-                  <div key={idx}>
-                    {showGroup && (
-                      <div className="sticky top-0 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground bg-muted/80 backdrop-blur-sm border-b border-border/30">
-                        {group.label}
-                      </div>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => { onChange(item); setOpen(false); setQuery(""); }}
-                      className={`w-full flex items-center gap-2 px-3 py-2 text-sm text-left hover:bg-accent transition-colors ${
-                        value === item ? "bg-primary/5 font-medium" : ""
-                      }`}
-                    >
-                      <span className={`w-4 h-4 shrink-0 rounded-full border flex items-center justify-center ${
-                        value === item ? "border-primary bg-primary" : "border-border"
-                      }`}>
-                        {value === item && <Check className="w-3 h-3 text-primary-foreground" />}
-                      </span>
-                      <span className="truncate">{item}</span>
-                    </button>
-                  </div>
-                );
-              })
+                  return (
+                    <div key={idx}>
+                      {showGroup && (
+                        <div className="sticky top-0 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground bg-muted/80 backdrop-blur-sm border-b border-border/30">
+                          {group.label}
+                        </div>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => { onChange(item); setOpen(false); setQuery(""); }}
+                        className={`w-full flex items-center gap-2 px-3 py-2 text-sm text-left hover:bg-accent transition-colors ${
+                          value === item ? "bg-primary/5 font-medium" : ""
+                        }`}
+                      >
+                        <span className={`w-4 h-4 shrink-0 rounded-full border flex items-center justify-center ${
+                          value === item ? "border-primary bg-primary" : "border-border"
+                        }`}>
+                          {value === item && <Check className="w-3 h-3 text-primary-foreground" />}
+                        </span>
+                        <span className="truncate">{item}</span>
+                      </button>
+                    </div>
+                  );
+                })}
+                {showCreate && (
+                  <button
+                    type="button"
+                    onClick={() => { onCreate?.(query); onChange(query); setOpen(false); setQuery(""); }}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-left hover:bg-accent transition-colors border-t border-border/30 text-primary"
+                  >
+                    <Plus className="w-4 h-4 shrink-0" />
+                    <span>Agregar &ldquo;<span className="font-medium">{query}</span>&rdquo;</span>
+                  </button>
+                )}
+              </>
             )}
           </div>
         </div>

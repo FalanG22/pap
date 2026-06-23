@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-import { LogIn, Mail, ArrowRight, Eye, EyeOff } from "lucide-react";
+import { LogIn, Mail, ArrowRight, Eye, EyeOff, Microscope } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -106,7 +106,7 @@ export default function LoginPage() {
           <div className="text-center mb-8">
             <div className="inline-flex items-center gap-3 mb-3">
               <div className="w-10 h-10 rounded-xl bg-primary shadow-sm flex items-center justify-center">
-                <span className="text-lg font-heading font-bold text-primary-foreground">P</span>
+                <Microscope className="w-5 h-5 text-primary-foreground" />
               </div>
             </div>
             <h1 className="text-xl font-heading font-bold tracking-tight">PAP Diagnóstico</h1>

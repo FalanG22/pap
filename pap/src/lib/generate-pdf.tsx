@@ -1,6 +1,27 @@
 import { renderToStream, Document, Page, Text, View, Image, StyleSheet } from '@react-pdf/renderer'
 import React from 'react'
 
+async function fetchImageAsBase64(url: string): Promise<{ uri: string } | null> {
+  try {
+    const response = await fetch(url)
+    if (!response.ok) {
+      console.error(`Image fetch failed (${response.status}): ${url}`)
+      return null
+    }
+    const buffer = await response.arrayBuffer()
+    const base64 = Buffer.from(buffer).toString('base64')
+    const ext = url.split('.').pop()?.toLowerCase() || 'png'
+    const mime =
+      ext === 'jpg' || ext === 'jpeg' ? 'image/jpeg'
+      : ext === 'svg' ? 'image/svg+xml'
+      : 'image/png'
+    return { uri: `data:${mime};base64,${base64}` }
+  } catch (err) {
+    console.error('Error fetching image:', err)
+    return null
+  }
+}
+
 const styles = StyleSheet.create({
   page: { padding: 40, fontFamily: 'Helvetica', fontSize: 10, color: '#1e1e2e' },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, paddingBottom: 16, borderBottom: '1 solid #e5e7eb' },
@@ -45,6 +66,11 @@ export async function generatePdfBuffer(params: {
   stampHeight?: number
 }): Promise<Uint8Array> {
   const { labName, patient, order, diagnosis, signatureUrl, stampUrl, showSignature = true, showStamp = true, stampHeight = 64 } = params
+
+  const [signatureSrc, stampSrc] = await Promise.all([
+    showSignature && signatureUrl ? fetchImageAsBase64(signatureUrl) : Promise.resolve(null),
+    showStamp && stampUrl ? fetchImageAsBase64(stampUrl) : Promise.resolve(null),
+  ])
 
   const age = patient?.birth_date
     ? `${Math.floor((Date.now() - new Date(patient.birth_date).getTime()) / 31557600000)} años`
@@ -144,13 +170,13 @@ export async function generatePdfBuffer(params: {
                 <Text style={{ fontSize: 8, fontFamily: 'Courier', color: '#6b7280' }}>
                   {signature}
                 </Text>
-                {(showSignature && signatureUrl) || (showStamp && stampUrl) ? (
+                {signatureSrc || stampSrc ? (
                   <View style={{ flexDirection: 'row', gap: 16, marginTop: 12, alignItems: 'flex-end' }}>
-                    {showSignature && signatureUrl && (
-                      <Image src={signatureUrl} style={{ height: 36 }} />
+                    {signatureSrc && (
+                      <Image src={signatureSrc} style={{ height: 36 }} />
                     )}
-                    {showStamp && stampUrl && (
-                      <Image src={stampUrl} style={{ height: stampHeight }} />
+                    {stampSrc && (
+                      <Image src={stampSrc} style={{ height: stampHeight }} />
                     )}
                   </View>
                 ) : null}

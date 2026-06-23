@@ -61,7 +61,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'No hay diagnósticos firmados pendientes de envío' }, { status: 400 })
   }
 
-  // 2. Obtener datos del laboratorio
+  // 2. Obtener datos del Doctor
   const { data: lab } = await supabase
     .schema('_public')
     .from('tenants')
@@ -72,7 +72,7 @@ export async function POST(request: Request) {
   const labName = (lab as unknown as { name: string })?.name || 'Laboratorio'
   const labEmail = (lab as { email?: string } | undefined)?.email
   if (!labEmail) {
-    return NextResponse.json({ error: 'El laboratorio no tiene email configurado' }, { status: 400 })
+    return NextResponse.json({ error: 'El Doctor no tiene email configurado' }, { status: 400 })
   }
 
   // 3. Obtener config de firma/sello
@@ -184,7 +184,7 @@ export async function POST(request: Request) {
     <tr><td style="padding:24px 32px 0;text-align:center">
       <a href="${labPortalUrl}"
          style="display:inline-block;padding:14px 32px;background:#4f46e5;color:#ffffff;font-size:15px;font-weight:600;text-decoration:none;border-radius:12px">
-        Ir al portal del laboratorio
+        Ir al portal del Doctor
       </a>
       <p style="margin:12px 0 0;font-size:13px;color:#6b7280;line-height:1.5">
         Ingresá al portal para gestionar las órdenes, descargar los informes y ver el historial completo.

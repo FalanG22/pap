@@ -6,12 +6,10 @@ import Link from "next/link"
 import {
   ArrowRight,
   Lock,
-  User,
   Building2,
   Fingerprint,
   ShieldCheck,
   FileText,
-  CheckCircle2,
   Menu,
   X,
   Microscope,
@@ -76,12 +74,12 @@ export default function Home() {
       >
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
           <Link href="/" className="flex items-center gap-2.5 no-underline">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-sky-500 to-blue-700 text-[10px] font-bold text-white shadow-sm">
-              LP
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-sky-500 to-blue-700 shadow-sm">
+              <Microscope className="size-4.5 text-white" />
             </div>
             <div className="flex flex-col leading-tight">
               <span className="font-heading text-sm font-semibold tracking-tight text-white">
-                Laboratorio de Citopatología
+                Diagnóstico Citológico
               </span>
               <span className="text-[10px] font-medium tracking-wider text-slate-500">
                 Dra. Liliana M. Placon&aacute;
@@ -143,69 +141,6 @@ export default function Home() {
                 <span className="text-slate-400">citológicos desde el portal</span>
               </h1>
 
-              <p className="text-balance mx-auto mt-4 max-w-xl text-base leading-relaxed text-slate-500">
-                Ingrese con su DNI y c&oacute;digo de acceso para obtener sus informes.
-                R&aacute;pido, seguro, sin registro.
-              </p>
-
-              <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-                <Link href="/login">
-                  <button className="inline-flex h-11 items-center gap-2 rounded-xl bg-sky-500 px-5 text-sm font-medium text-white shadow-sm transition-all duration-300 hover:bg-sky-400">
-                    Ingresar al Portal
-                    <ArrowRight className="size-4" />
-                  </button>
-                </Link>
-                <Link href="/portal/paciente">
-                  <button className="inline-flex h-11 items-center gap-2 rounded-xl border border-white/[0.1] bg-white/[0.04] px-5 text-sm text-slate-300 transition-all duration-300 hover:border-white/[0.18] hover:bg-white/[0.08] hover:text-white">
-                    Consultar como paciente
-                  </button>
-                </Link>
-              </div>
-            </div>
-
-            <div className="mx-auto mt-16 grid max-w-5xl gap-4 md:grid-cols-2">
-              {/* PACIENTE */}
-              <Link href="/portal/paciente" className="group no-underline">
-                <div className="relative overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.03] p-6 backdrop-blur-xl transition-all duration-300 hover:border-white/[0.12] hover:bg-white/[0.05]">
-                  <div className="mb-4 flex items-center gap-3">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-sky-500/10 text-sky-400 ring-1 ring-sky-500/20">
-                      <User className="size-5" />
-                    </div>
-                    <div>
-                      <h2 className="font-heading text-base font-semibold text-white">
-                        Pacientes
-                      </h2>
-                      <p className="text-xs text-slate-500">
-                        Descargue sus resultados
-                      </p>
-                    </div>
-                  </div>
-                  <div className="space-y-2.5">
-                    <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
-                      <label className="mb-1 block text-[11px] font-medium text-slate-500">Documento de identidad</label>
-                      <div className="flex items-center gap-2 rounded-lg border border-white/[0.08] bg-white/[0.04] px-3 py-2 text-sm text-slate-500">
-                        <Fingerprint className="size-4 shrink-0 text-slate-600" />
-                        <span>Ingrese su DNI</span>
-                      </div>
-                    </div>
-                    <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
-                      <label className="mb-1 block text-[11px] font-medium text-slate-500">C&oacute;digo de acceso</label>
-                      <div className="flex items-center gap-2 rounded-lg border border-white/[0.08] bg-white/[0.04] px-3 py-2 text-sm text-slate-500">
-                        <Lock className="size-4 shrink-0 text-slate-600" />
-                        <span>&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-center gap-2 rounded-xl bg-sky-500 py-2.5 text-sm font-medium text-white transition-all duration-300 group-hover:bg-sky-400">
-                      Consultar resultados
-                      <ArrowRight className="size-4" />
-                    </div>
-                    <p className="text-center text-[11px] text-slate-600">
-                      Sin registro. Solo su DNI y el c&oacute;digo del laboratorio.
-                    </p>
-                  </div>
-                </div>
-              </Link>
-
               {/* LABORATORIO */}
               <Link href="/portal/lab" className="group no-underline">
                 <div className="relative overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.03] p-6 backdrop-blur-xl transition-all duration-300 hover:border-white/[0.12] hover:bg-white/[0.05]">
@@ -215,7 +150,7 @@ export default function Home() {
                     </div>
                     <div>
                       <h2 className="font-heading text-base font-semibold text-white">
-                        Laboratorios
+                        Doctores
                       </h2>
                       <p className="text-xs text-slate-500">
                         Acceso profesional
@@ -251,32 +186,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* ===== LAB INFO ===== */}
-        <section className="relative px-4 py-20 sm:px-6">
-          <GlowOrb className="-top-40 right-0 h-[400px] w-[400px]" color="sky" />
-          <div className="mx-auto max-w-3xl">
-            <div className="relative overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.03] p-6 backdrop-blur-xl md:p-8">
-              <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-sky-500/10 text-sky-400 ring-1 ring-sky-500/20">
-                <Microscope className="size-5" />
-              </div>
-              <h2 className="font-heading mb-2 text-base font-semibold text-white">
-                Sobre el laboratorio
-              </h2>
-              <p className="text-sm leading-relaxed text-slate-500">
-                M&aacute;s de 15 a&ntilde;os dedicados al diagn&oacute;stico citol&oacute;gico.
-                Procesamos y analizamos muestras ginecol&oacute;gicas y no ginecol&oacute;gicas
-                bajo est&aacute;ndares internacionales de calidad.
-              </p>
-              <div className="mt-4 flex flex-wrap gap-2">
-                {["Citopatolog&iacute;a", "PAAF", "Base L&iacute;quida", "Bethesda 2024"].map((t) => (
-                  <span key={t} className="rounded-md border border-white/[0.06] bg-white/[0.03] px-2 py-0.5 text-[11px] text-slate-500">
-                    {t}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
-        </section>
+
 
         {/* ===== SEGURIDAD ===== */}
         <section className="relative px-4 pb-24 pt-4 sm:px-6">
@@ -320,8 +230,8 @@ export default function Home() {
           <div className="grid gap-8 md:grid-cols-3">
             <div className="md:col-span-1">
               <Link href="/" className="mb-3 flex items-center gap-2 no-underline">
-                <div className="flex h-7 w-7 items-center justify-center rounded-md bg-gradient-to-br from-sky-500 to-blue-700 text-[8px] font-bold text-white">
-                  LP
+                <div className="flex h-7 w-7 items-center justify-center rounded-md bg-gradient-to-br from-sky-500 to-blue-700">
+                  <Microscope className="size-3.5 text-white" />
                 </div>
                 <span className="font-heading text-xs font-semibold text-white">
                   Citopatolog&iacute;a Placon&aacute;
@@ -339,8 +249,7 @@ export default function Home() {
               </h4>
               <ul className="flex flex-col gap-2">
                 {[
-                  { label: "Portal del paciente", href: "/portal/paciente" },
-                  { label: "Portal laboratorios", href: "/portal/lab" },
+                  { label: "Portal Doctores", href: "/portal/lab" },
                   { label: "Iniciar sesi&oacute;n", href: "/login" },
                 ].map((item) => (
                   <li key={item.label}>

@@ -51,13 +51,23 @@ export async function POST(
   const tenant = await getUserTenant(supabase)
   if (!tenant) return NextResponse.json({ error: 'No tenant' }, { status: 403 })
 
+  const { data: order } = await supabase
+    .from('order')
+    .select('tenant_id')
+    .eq('id', orderId)
+    .single()
+
+  if (!order) {
+    return NextResponse.json({ error: 'Orden no encontrada' }, { status: 404 })
+  }
+
   const { data, error } = await supabase
     .from('diagnosis')
     .upsert({
       order_id: orderId,
-      tenant_id: tenant.tenant_id,
       specialist_id: tenant.internal_user_id,
       ...body,
+      tenant_id: order.tenant_id,
     }, { onConflict: 'order_id' })
     .select()
     .single()

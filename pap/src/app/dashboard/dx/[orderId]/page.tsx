@@ -8,7 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { MacroInput } from "@/components/diagnosis/MacroInput";
 import { HistoryPanel } from "@/components/diagnosis/HistoryPanel";
 import { CategorySearchSelect } from "@/components/diagnosis/CategorySearchSelect";
-import { ArrowLeft, Save, Send, Download, User, FileText, Calendar, CheckCircle2, Clock, Zap, Trash2 } from "lucide-react";
+import { ArrowLeft, Save, Send, Download, User, FileText, Calendar, CheckCircle2, Clock, Zap, Trash2, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 
 const SAMPLE_QUALITY_OPTIONS = [
@@ -60,6 +60,8 @@ const CATEGORY_GROUPS = [
   { label: "Muestra", start: 25, end: 31 },
 ];
 
+const CUSTOM_CATEGORIES_KEY = "pap:custom-dx-categories";
+
 export default function DiagnosisPage({ params }: { params: Promise<{ orderId: string }> }) {
   const { orderId } = use(params);
   const router = useRouter();
@@ -72,7 +74,7 @@ export default function DiagnosisPage({ params }: { params: Promise<{ orderId: s
   const [patientName, setPatientName] = useState("—");
   const [patientDni, setPatientDni] = useState("—");
   const [patientInfo, setPatientInfo] = useState({ age: "—", sex: "—", email: "—" });
-  const [history, setHistory] = useState<{ date: string; summary: string; category: string }[]>([]);
+  const [history, setHistory] = useState<{ date: string; summary: string; category: string; fullSummary: string; sampleQuality: string; signedAt: string }[]>([]);
   const [downloadedAt, setDownloadedAt] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -81,6 +83,62 @@ export default function DiagnosisPage({ params }: { params: Promise<{ orderId: s
   const [customDates, setCustomDates] = useState<number[]>([]);
   const [scheduleLoaded] = useState(false);
   const isLocked = isSigned && (orderStatus === "delivered" || orderStatus === "completed");
+
+  const [customQualityOptions, setCustomQualityOptions] = useState<{ value: string; label: string }[]>([]);
+  const [showAddQuality, setShowAddQuality] = useState(false);
+  const [newQualityLabel, setNewQualityLabel] = useState("");
+
+  const allQualityOptions = [...SAMPLE_QUALITY_OPTIONS, ...customQualityOptions];
+
+  const [customCategories, setCustomCategories] = useState<string[]>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem(CUSTOM_CATEGORIES_KEY);
+        return stored ? JSON.parse(stored) : [];
+      } catch { return []; }
+    }
+    return [];
+  });
+
+  useEffect(() => {
+    localStorage.setItem(CUSTOM_CATEGORIES_KEY, JSON.stringify(customCategories));
+  }, [customCategories]);
+
+  const handleAddQualityOption = async () => {
+    const label = newQualityLabel.trim();
+    if (!label) return;
+    const value = "custom_" + label.toLowerCase().replace(/[^a-z0-9]/g, "_");
+    if (allQualityOptions.some(o => o.value === value)) {
+      toast.error("Esa opción ya existe");
+      return;
+    }
+    const newOption = { value, label };
+    const updated = [...customQualityOptions, newOption];
+    setCustomQualityOptions(updated);
+    setNewQualityLabel("");
+    setShowAddQuality(false);
+    const res = await fetch("/api/tenant-config", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ custom_sample_quality_options: updated }),
+    });
+    if (!res.ok) toast.error("Error al guardar opción personalizada");
+  };
+
+  const handleRemoveQualityOption = async (value: string) => {
+    const updated = customQualityOptions.filter(o => o.value !== value);
+    setCustomQualityOptions(updated);
+    if (sampleQuality === value) setSampleQuality("adequate");
+    await fetch("/api/tenant-config", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ custom_sample_quality_options: updated }),
+    });
+  };
+
+  const handleAddCategory = (newCat: string) => {
+    setCustomCategories(prev => prev.includes(newCat) ? prev : [...prev, newCat]);
+  };
 
   const loadSchedule = async () => {
     try {
@@ -133,11 +191,23 @@ export default function DiagnosisPage({ params }: { params: Promise<{ orderId: s
               date: new Date(h.signed_at || h.created_at).toLocaleDateString("es-AR"),
               summary: h.descriptive_dx?.slice(0, 80) + "...",
               category: h.general_category,
+              fullSummary: h.descriptive_dx || "",
+              sampleQuality: h.sample_quality || "",
+              signedAt: h.signed_at ? new Date(h.signed_at).toLocaleDateString("es-AR", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "",
             }))
           );
         }
 
-        if (mounted) loadSchedule();
+        if (mounted) {
+          loadSchedule();
+          const configRes = await fetch("/api/tenant-config");
+          if (configRes.ok) {
+            const config = await configRes.json();
+            if (config.custom_sample_quality_options) {
+              setCustomQualityOptions(config.custom_sample_quality_options);
+            }
+          }
+        }
       } catch {
         toast.error("Error de conexión");
       } finally {
@@ -230,6 +300,11 @@ export default function DiagnosisPage({ params }: { params: Promise<{ orderId: s
     }
   };
 
+  const allCategories = [...CATEGORIES, ...customCategories];
+  const allGroups = customCategories.length > 0
+    ? [...CATEGORY_GROUPS, { label: "Personalizadas", start: CATEGORIES.length, end: CATEGORIES.length + customCategories.length - 1 }]
+    : CATEGORY_GROUPS;
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -314,24 +389,58 @@ export default function DiagnosisPage({ params }: { params: Promise<{ orderId: s
 
             {/* Sample quality */}
             <div className="rounded-xl border border-border/50 bg-card p-5 space-y-4">
-              <div className="flex items-center gap-2 text-sm font-heading font-semibold text-muted-foreground uppercase tracking-wider">
-                <FileText className="w-4 h-4" /> Calidad de la muestra
+              <div className="flex items-center justify-between gap-2 text-sm font-heading font-semibold text-muted-foreground uppercase tracking-wider">
+                <div className="flex items-center gap-2">
+                  <FileText className="w-4 h-4" /> Calidad de la muestra
+                </div>
+                {!isLocked && (
+                  <button
+                    onClick={() => setShowAddQuality(true)}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-primary/5 text-primary text-xs font-medium hover:bg-primary/10 transition-colors"
+                  >
+                    <Plus className="w-3 h-3" /> Agregar
+                  </button>
+                )}
               </div>
               <div className="flex flex-wrap gap-2">
-                {SAMPLE_QUALITY_OPTIONS.map((opt) => (
-                  <button
-                    key={opt.value}
-                    onClick={() => !isLocked && setSampleQuality(opt.value)}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                      sampleQuality === opt.value
-                        ? "bg-primary text-primary-foreground shadow-sm"
-                        : "bg-muted text-muted-foreground hover:bg-muted/80"
-                    } ${isLocked ? "opacity-60 cursor-not-allowed" : ""}`}
-                  >
-                    {opt.label}
-                  </button>
+                {allQualityOptions.map((opt) => (
+                  <div key={opt.value} className="relative group">
+                    <button
+                      onClick={() => !isLocked && setSampleQuality(opt.value)}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                        sampleQuality === opt.value
+                          ? "bg-primary text-primary-foreground shadow-sm"
+                          : "bg-muted text-muted-foreground hover:bg-muted/80"
+                      } ${isLocked ? "opacity-60 cursor-not-allowed" : ""}`}
+                    >
+                      {opt.label}
+                    </button>
+                    {customQualityOptions.some(o => o.value === opt.value) && !isLocked && (
+                      <button
+                        onClick={() => handleRemoveQualityOption(opt.value)}
+                        className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                        title="Eliminar"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    )}
+                  </div>
                 ))}
               </div>
+              {showAddQuality && !isLocked && (
+                <div className="flex items-center gap-2 pt-1">
+                  <input
+                    autoFocus
+                    value={newQualityLabel}
+                    onChange={e => setNewQualityLabel(e.target.value)}
+                    onKeyDown={e => { if (e.key === "Enter") handleAddQualityOption(); if (e.key === "Escape") { setShowAddQuality(false); setNewQualityLabel(""); } }}
+                    placeholder="Ej: Muestra limitada..."
+                    className="flex-1 h-9 rounded-lg border border-border bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring/50"
+                  />
+                  <Button size="sm" className="h-9 rounded-lg" onClick={handleAddQualityOption}>Agregar</Button>
+                  <Button size="sm" variant="ghost" className="h-9 rounded-lg" onClick={() => { setShowAddQuality(false); setNewQualityLabel(""); }}>Cancelar</Button>
+                </div>
+              )}
             </div>
 
             {/* Category */}
@@ -340,12 +449,13 @@ export default function DiagnosisPage({ params }: { params: Promise<{ orderId: s
                 <Calendar className="w-4 h-4" /> Categoría general
               </div>
               <CategorySearchSelect
-                items={CATEGORIES}
-                groups={CATEGORY_GROUPS}
+                items={allCategories}
+                groups={allGroups}
                 value={category}
                 onChange={setCategory}
                 disabled={isLocked}
                 placeholder="Buscar categoría..."
+                onCreate={handleAddCategory}
               />
             </div>
 
@@ -462,7 +572,7 @@ export default function DiagnosisPage({ params }: { params: Promise<{ orderId: s
                               prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d].sort((a, b) => a - b)
                             )
                           }
-                          className={`w-7 h-7 text-xs rounded-md transition-colors ${
+                          className={`min-w-[44px] min-h-[44px] text-xs rounded-md transition-colors ${
                             customDates.includes(d)
                               ? "bg-primary text-primary-foreground"
                               : "bg-muted text-muted-foreground hover:bg-muted/80"
@@ -507,12 +617,12 @@ export default function DiagnosisPage({ params }: { params: Promise<{ orderId: s
               <Button variant={downloadedAt ? "outline" : "destructive"} size="sm" className="rounded-xl gap-1.5"
                 onClick={() => setShowDeleteConfirm(true)}
                 disabled={deleting || !!downloadedAt}
-                title={downloadedAt ? "No se puede eliminar: ya fue descargado por el laboratorio" : ""}
+                title={downloadedAt ? "No se puede eliminar: ya fue descargado por el Doctor" : ""}
               >
                 <Trash2 className="w-3.5 h-3.5" /> Eliminar orden
               </Button>
               {downloadedAt && (
-                <p className="text-xs text-muted-foreground mt-2">No se puede eliminar porque el laboratorio ya descargó este diagnóstico.</p>
+                <p className="text-xs text-muted-foreground mt-2">No se puede eliminar porque el Doctor ya descargó este diagnóstico.</p>
               )}
               {showDeleteConfirm && (
                 <div className="mt-3 rounded-xl bg-destructive/5 border border-destructive/20 p-4 space-y-3">

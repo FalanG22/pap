@@ -5,10 +5,12 @@ import { getUserTenant } from '@/lib/get-tenant'
 import { generatePdfBuffer } from '@/lib/generate-pdf'
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ orderId: string }> }
 ) {
   const { orderId } = await params
+  const { searchParams } = new URL(request.url)
+  const isDownload = searchParams.get('download') === '1'
   const supabase = await createClient()
   const tenant = await getUserTenant(supabase)
   if (!tenant) return NextResponse.json({ error: 'No auth' }, { status: 401 })
@@ -75,10 +77,13 @@ export async function GET(
       stampHeight,
     })
 
+    const filename = `diagnostico-${orderId.slice(0, 8)}.pdf`
+    const disposition = isDownload ? `attachment; filename="${filename}"` : `inline; filename="${filename}"`
+
     return new NextResponse(pdfBuffer as unknown as BodyInit, {
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `inline; filename="diagnostico-${orderId.slice(0, 8)}.pdf"`,
+        'Content-Disposition': disposition,
       },
     })
   } catch (err) {

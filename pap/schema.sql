@@ -106,7 +106,7 @@ CREATE TABLE diagnosis (
     tenant_id         UUID NOT NULL REFERENCES _public.tenants(id),
     order_id          UUID NOT NULL REFERENCES "order"(id) ON DELETE CASCADE,
     specialist_id     UUID NOT NULL,
-    sample_quality    VARCHAR(20) NOT NULL CHECK (sample_quality IN ('adequate', 'inadequate')),
+    sample_quality    VARCHAR(100) NOT NULL DEFAULT 'adequate',
     general_category  VARCHAR(100) NOT NULL,
     descriptive_dx    TEXT NOT NULL,
     macros_used       JSONB DEFAULT '[]'::jsonb,

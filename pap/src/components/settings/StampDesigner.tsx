@@ -289,7 +289,7 @@ export function StampDesigner({
       {/* Campos de texto */}
       <div className="grid sm:grid-cols-2 gap-3">
         <div className="space-y-1.5">
-          <label className="text-xs font-medium text-muted-foreground">Nombre del laboratorio *</label>
+          <label className="text-xs font-medium text-muted-foreground">Nombre del Doctor *</label>
           <input
             value={labName}
             onChange={e => setLabName(e.target.value)}

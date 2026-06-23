@@ -260,7 +260,7 @@ export default function CitologoPage() {
 
               <p className="text-balance mx-auto mt-5 max-w-2xl text-lg leading-relaxed text-slate-400 md:text-xl">
                 Acceda a sus informes citológicos con la confianza del diagnóstico
-                especializado. Un servicio integral para pacientes y laboratorios, con
+                especializado. Un servicio integral para pacientes y doctores, con
                 la seguridad que exige la medicina moderna.
               </p>
 
@@ -346,7 +346,7 @@ export default function CitologoPage() {
                     </button>
                     <p className="text-center text-[11px] text-slate-500">
                       Sin registro. Solo su DNI y el código entregado por el
-                      laboratorio.
+                      Doctor.
                     </p>
                   </div>
                 </div>
@@ -362,7 +362,7 @@ export default function CitologoPage() {
                     </div>
                     <div>
                       <h3 className="font-heading text-lg font-semibold text-white">
-                        Para Laboratorios
+                        Para Doctores
                       </h3>
                       <p className="text-xs text-slate-400">
                         Acceso profesional para instituciones
@@ -390,7 +390,7 @@ export default function CitologoPage() {
                       </div>
                     </div>
                     <button className="flex w-full items-center justify-center gap-2 rounded-xl border border-cyan-500/30 bg-cyan-500/10 py-2.5 text-sm font-semibold text-cyan-300 shadow-lg shadow-cyan-500/10 transition-all duration-300 hover:bg-cyan-500/20 hover:text-cyan-200">
-                      Iniciar sesión como laboratorio
+                      Iniciar sesión como Doctor
                       <ArrowRight className="size-4" />
                     </button>
                     <p className="text-center text-[11px] text-slate-500">
@@ -575,7 +575,7 @@ export default function CitologoPage() {
               <GlowOrb className="-bottom-40 -left-40 h-[400px] w-[400px]" color="cyan" />
               <div className="relative z-10 mx-auto max-w-2xl py-8">
                 <h2 className="font-heading text-balance text-[clamp(1.5rem,3.5vw,2.5rem)] font-bold leading-tight tracking-tight text-white">
-                  ¿Es laboratorio o profesional de la salud?
+                  ¿Es doctor o profesional de la salud?
                 </h2>
                 <p className="mx-auto mt-4 max-w-lg text-slate-400">
                   Solicite su alta como institución derivante y acceda al panel de
@@ -621,7 +621,7 @@ export default function CitologoPage() {
               <p className="mb-5 max-w-sm text-sm leading-relaxed text-slate-500">
                 Consultorio privado de citopatología con más de 15 años de trayectoria.
                 Diagnóstico de precisión, informes estandarizados y portal digital
-                seguro para pacientes y laboratorios.
+                seguro para pacientes y doctores.
               </p>
               <div className="flex gap-3">
                 {["LinkedIn", "Email", "WhatsApp"].map((s) => (
@@ -667,7 +667,7 @@ export default function CitologoPage() {
               <ul className="flex flex-col gap-2.5">
                 {[
                   { label: "Portal Pacientes", href: "/portal/paciente" },
-                  { label: "Portal Laboratorios", href: "/portal/lab" },
+                  { label: "Portal Doctores", href: "/portal/lab" },
                   { label: "Aviso de Privacidad", href: "#" },
                   { label: "Términos de Uso", href: "#" },
                   { label: "Contacto", href: "/contacto" },

@@ -109,12 +109,12 @@ function SuperAdminDashboard({
       <div className="px-6 py-6 max-w-6xl mx-auto space-y-6">
         <div>
           <h1 className="text-2xl font-heading font-bold tracking-tight">Dashboard</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Resumen general de laboratorios</p>
+          <p className="text-sm text-muted-foreground mt-0.5">Resumen general de doctores</p>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {[
-            { label: "Laboratorios", value: labs.length, icon: Hospital, trend: "+2", trendUp: true, accent: "from-primary/20 to-primary/5", iconBg: "bg-gradient-to-br from-primary/10 to-primary/5", iconColor: "text-primary", barColor: "bg-primary" },
+            { label: "Doctores", value: labs.length, icon: Hospital, trend: "+2", trendUp: true, accent: "from-primary/20 to-primary/5", iconBg: "bg-gradient-to-br from-primary/10 to-primary/5", iconColor: "text-primary", barColor: "bg-primary" },
             { label: "Órdenes totales", value: totalAll, icon: ClipboardCheck, trend: "+12%", trendUp: true, accent: "from-blue-400/20 to-blue-400/5", iconBg: "bg-gradient-to-br from-blue-50 to-blue-100", iconColor: "text-blue-600", barColor: "bg-blue-500" },
             { label: "Pendientes", value: pendingAll, icon: Clock, trend: pendingAll > 0 ? `+${pendingAll}` : "0", trendUp: pendingAll > 5, accent: "from-amber-400/20 to-amber-400/5", iconBg: "bg-gradient-to-br from-amber-50 to-amber-100", iconColor: "text-amber-600", barColor: "bg-amber-500" },
             { label: "Completados", value: completedAll, icon: CheckCircle2, trend: completedAll > 0 ? `${Math.round((completedAll / (totalAll || 1)) * 100)}%` : "0%", trendUp: true, accent: "from-emerald-400/20 to-emerald-400/5", iconBg: "bg-gradient-to-br from-emerald-50 to-emerald-100", iconColor: "text-emerald-600", barColor: "bg-emerald-500" },
@@ -140,7 +140,7 @@ function SuperAdminDashboard({
                   </div>
                   <div className="h-1 rounded-full bg-muted/50 overflow-hidden">
                     <div className={`h-full rounded-full ${s.barColor} opacity-40 transition-all duration-700`}
-                      style={{ width: `${s.label === "Laboratorios" ? 100 : s.label === "Órdenes totales" ? 100 : s.label === "Pendientes" ? Math.min((pendingAll / (totalAll || 1)) * 100, 100) : Math.min((completedAll / (totalAll || 1)) * 100, 100)}%` }}
+                      style={{ width: `${s.label === "Doctores" ? 100 : s.label === "Órdenes totales" ? 100 : s.label === "Pendientes" ? Math.min((pendingAll / (totalAll || 1)) * 100, 100) : Math.min((completedAll / (totalAll || 1)) * 100, 100)}%` }}
                     />
                   </div>
                 </div>
@@ -152,10 +152,10 @@ function SuperAdminDashboard({
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div className="relative w-full sm:max-w-xs">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input placeholder="Buscar laboratorio..." className="pl-9 h-10 rounded-xl bg-card border-border/50" value={search} onChange={e => setSearch(e.target.value)} />
+            <Input placeholder="Buscar doctor..." className="pl-9 h-10 rounded-xl bg-card border-border/50" value={search} onChange={e => setSearch(e.target.value)} />
           </div>
           <Button size="sm" className="rounded-xl gap-1.5 shrink-0" onClick={() => router.push("/dashboard/labs")}>
-            <Plus className="w-4 h-4" /> Nuevo laboratorio
+            <Plus className="w-4 h-4" /> Nuevo Doctor
           </Button>
         </div>
 
@@ -183,9 +183,9 @@ function SuperAdminDashboard({
             <div className="w-14 h-14 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-4">
               <Building2 className="w-6 h-6 text-muted-foreground" />
             </div>
-            <p className="text-muted-foreground font-medium">No hay laboratorios</p>
+            <p className="text-muted-foreground font-medium">No hay doctores</p>
             <p className="text-sm text-muted-foreground/60 mt-1">
-              {search ? "Probá con otro término de búsqueda" : "Creá tu primer laboratorio para empezar"}
+              {search ? "Probá con otro término de búsqueda" : "Creá tu primer Doctor para empezar"}
             </p>
           </div>
         ) : (
@@ -268,7 +268,7 @@ function LabDashboard({ orders, setOrders, loading }: { orders: OrderRow[]; setO
       const res = await fetch("/api/send-batch", { method: "POST" });
       const data = await res.json();
       if (!res.ok) { toast.error(data.error || "Error al enviar"); return; }
-      toast.success(`${data.count} diagnóstico${data.count !== 1 ? 's' : ''} enviado${data.count !== 1 ? 's' : ''} al laboratorio`);
+      toast.success(`${data.count} diagnóstico${data.count !== 1 ? 's' : ''} enviado${data.count !== 1 ? 's' : ''} al Doctor`);
       setOrders(orders.map(o => o.status === 'completed' ? { ...o, status: 'delivered' } : o));
     } catch { toast.error("Error de conexión"); }
     finally { setSendingBatch(false); }
@@ -363,7 +363,7 @@ function LabDashboard({ orders, setOrders, loading }: { orders: OrderRow[]; setO
     <div className="min-h-screen">
       <div className="px-6 py-6 max-w-6xl mx-auto space-y-6">
         <div>
-          <h1 className="text-2xl font-heading font-bold tracking-tight">Panel del Laboratorio</h1>
+          <h1 className="text-2xl font-heading font-bold tracking-tight">Panel del Doctor</h1>
           <p className="text-sm text-muted-foreground mt-0.5">Gestión de órdenes y descargas</p>
         </div>
 
@@ -411,7 +411,7 @@ function LabDashboard({ orders, setOrders, loading }: { orders: OrderRow[]; setO
               </div>
               <div>
                 <p className="text-sm font-medium text-rose-800">{pendingSendCount} diagnóstico{pendingSendCount !== 1 ? 's' : ''} pendiente{pendingSendCount !== 1 ? 's' : ''} de envío</p>
-                <p className="text-xs text-rose-600/70">Enviar todos al laboratorio en un solo email con PDFs adjuntos</p>
+                <p className="text-xs text-rose-600/70">Enviar todos al Doctor en un solo email con PDFs adjuntos</p>
               </div>
             </div>
             <Button onClick={handleBatchSend} disabled={sendingBatch}
@@ -572,7 +572,7 @@ function LabDashboard({ orders, setOrders, loading }: { orders: OrderRow[]; setO
                           </div>
                           <div className="flex items-center gap-1 shrink-0 ml-3">
                             {o.diagnosis?.is_signed && (
-                              <Button variant="ghost" size="icon" className="w-8 h-8"
+                              <Button variant="ghost" size="icon" className="min-w-[44px] min-h-[44px]"
                                 onClick={() => handleDownload(o.id)}
                                 disabled={downloadingId === o.id || downloadingId === "batch"}
                               >
