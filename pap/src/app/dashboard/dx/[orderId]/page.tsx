@@ -320,35 +320,50 @@ export default function DiagnosisPage({ params }: { params: Promise<{ orderId: s
     <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="sticky top-0 z-10 border-b border-border/40 bg-background/80 backdrop-blur-md">
-        <div className="flex items-center justify-between px-6 h-14">
-          <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between px-4 sm:px-6 min-h-14 py-2 gap-2">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <Button variant="ghost" size="icon" onClick={() => router.back()}>
               <ArrowLeft className="w-4 h-4" />
             </Button>
-            <div className="flex items-center gap-2">
-              <span className="font-heading font-bold text-base">{patientName}</span>
-              <Separator orientation="vertical" className="h-5" />
-              <span className="text-sm text-muted-foreground font-mono">#{orderId.slice(0, 6)}</span>
+            <div className="min-w-0 flex items-center gap-2">
+              <span className="font-heading font-bold text-sm sm:text-base truncate">{patientName}</span>
+              <Separator orientation="vertical" className="h-4 shrink-0" />
+              <span className="text-xs sm:text-sm text-muted-foreground font-mono shrink-0">#{orderId.slice(0, 6)}</span>
             </div>
-            <Badge variant={orderStatus === "completed" || orderStatus === "delivered" ? "outline" : "secondary"} className="text-xs">
+            <Badge variant={orderStatus === "completed" || orderStatus === "delivered" ? "outline" : "secondary"} className="text-[10px] sm:text-xs shrink-0">
               {orderStatus === "completed" ? "Completado" : orderStatus === "delivered" ? "Enviado" : "Pendiente"}
             </Badge>
             {isSigned && (
-              <span className="flex items-center gap-1 text-xs text-emerald-600 font-medium">
+              <span className="hidden sm:flex items-center gap-1 text-xs text-emerald-600 font-medium shrink-0">
                 <CheckCircle2 className="w-3 h-3" /> Firmado
               </span>
             )}
           </div>
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" className="rounded-xl gap-1.5" onClick={() => window.open(`/api/pdf/${orderId}`, '_blank')}>
+          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+            <Button variant="ghost" size="icon" className="sm:hidden min-w-[44px] min-h-[44px]" onClick={() => window.open(`/api/pdf/${orderId}`, '_blank')} title="PDF">
+              <Download className="w-4 h-4" />
+            </Button>
+            <Button variant="ghost" size="sm" className="hidden sm:inline-flex rounded-xl gap-1.5" onClick={() => window.open(`/api/pdf/${orderId}`, '_blank')}>
               <Download className="w-3.5 h-3.5" /> PDF
             </Button>
-            <Button variant="outline" size="sm" className="rounded-xl gap-1.5" onClick={() => handleSave()} disabled={saving || isLocked}>
+            <Button variant="outline" size="icon" className="sm:hidden min-w-[44px] min-h-[44px]" onClick={() => handleSave()} disabled={saving || isLocked} title="Borrador">
+              <Save className="w-4 h-4" />
+            </Button>
+            <Button variant="outline" size="sm" className="hidden sm:inline-flex rounded-xl gap-1.5" onClick={() => handleSave()} disabled={saving || isLocked}>
               <Save className="w-3.5 h-3.5" /> {saving ? "Guardando..." : "Borrador"}
             </Button>
             <Button
+              size="icon"
+              className="sm:hidden min-w-[44px] min-h-[44px]"
+              onClick={handleSign}
+              disabled={isLocked || saving}
+              title={isSigned ? "Firmado" : "Firmar y enviar"}
+            >
+              <Send className="w-4 h-4" />
+            </Button>
+            <Button
               size="sm"
-              className="rounded-xl gap-1.5"
+              className="hidden sm:inline-flex rounded-xl gap-1.5"
               onClick={handleSign}
               disabled={isLocked || saving}
             >
@@ -358,12 +373,12 @@ export default function DiagnosisPage({ params }: { params: Promise<{ orderId: s
         </div>
       </div>
 
-      <div className="px-6 py-6 max-w-6xl mx-auto">
-        <div className="grid lg:grid-cols-3 gap-6">
+      <div className="px-4 sm:px-6 py-4 sm:py-6 max-w-6xl mx-auto">
+        <div className="grid lg:grid-cols-3 gap-4 sm:gap-6">
           {/* Main column */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-4 sm:space-y-6">
             {/* Patient info */}
-            <div className="rounded-xl border border-border/50 bg-card p-5 space-y-4">
+            <div className="rounded-xl border border-border/50 bg-card p-4 sm:p-5 space-y-4">
               <div className="flex items-center gap-2 text-sm font-heading font-semibold text-muted-foreground uppercase tracking-wider">
                 <User className="w-4 h-4" /> Paciente
               </div>
@@ -388,7 +403,7 @@ export default function DiagnosisPage({ params }: { params: Promise<{ orderId: s
             </div>
 
             {/* Sample quality */}
-            <div className="rounded-xl border border-border/50 bg-card p-5 space-y-4">
+            <div className="rounded-xl border border-border/50 bg-card p-4 sm:p-5 space-y-4">
               <div className="flex items-center justify-between gap-2 text-sm font-heading font-semibold text-muted-foreground uppercase tracking-wider">
                 <div className="flex items-center gap-2">
                   <FileText className="w-4 h-4" /> Calidad de la muestra
@@ -444,7 +459,7 @@ export default function DiagnosisPage({ params }: { params: Promise<{ orderId: s
             </div>
 
             {/* Category */}
-            <div className="rounded-xl border border-border/50 bg-card p-5 space-y-4">
+            <div className="rounded-xl border border-border/50 bg-card p-4 sm:p-5 space-y-4">
               <div className="flex items-center gap-2 text-sm font-heading font-semibold text-muted-foreground uppercase tracking-wider">
                 <Calendar className="w-4 h-4" /> Categoría general
               </div>
@@ -461,7 +476,7 @@ export default function DiagnosisPage({ params }: { params: Promise<{ orderId: s
 
             {/* Macros quick insert */}
             {!isLocked && (
-              <div className="rounded-xl border border-border/50 bg-card p-5 space-y-4">
+              <div className="rounded-xl border border-border/50 bg-card p-4 sm:p-5 space-y-4">
                 <div className="flex items-center gap-2 text-sm font-heading font-semibold text-muted-foreground uppercase tracking-wider">
                   <Zap className="w-4 h-4" /> Macros rápidas
                 </div>
@@ -483,7 +498,7 @@ export default function DiagnosisPage({ params }: { params: Promise<{ orderId: s
             )}
 
             {/* Diagnosis text */}
-            <div className="rounded-xl border border-border/50 bg-card p-5 space-y-4">
+            <div className="rounded-xl border border-border/50 bg-card p-4 sm:p-5 space-y-4">
               <div className="flex items-center gap-2 text-sm font-heading font-semibold text-muted-foreground uppercase tracking-wider">
                 <FileText className="w-4 h-4" /> Diagnóstico descriptivo
               </div>
